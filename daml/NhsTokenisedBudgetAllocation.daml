@@ -1,0 +1,386 @@
+-- Copyright (c) 2026 NHS Digital
+-- SPDX-License-Identifier: Apache-2.0
+
+module NhsTokenisedBudgetAllocation where
+
+import DA.Assert
+import DA.Optional
+import DA.Date
+import DA.Time
+
+-- ============================================================
+-- COMMITMENTS
+-- ============================================================
+
+type Commitment = Text
+
+hashText : Text -> Commitment
+hashText t = t
+
+createAmountCommitment : Decimal -> Commitment
+createAmountCommitment amt =
+  hashText (show amt)
+
+createPurposeCommitment : Text -> Commitment
+createPurposeCommitment purpose =
+  hashText purpose
+
+-- ============================================================
+-- NHS BUDGET ALLOCATION
+-- ============================================================
+
+template BudgetAllocation
+  with
+    allocator  : Party
+    recipient  : Party
+    fiscalYear : Text
+    amountGbp  : Decimal
+    purpose    : Text
+  where
+    signatory allocator
+    observer recipient
+
+    choice SubAllocate : ContractId BudgetAllocation
+      with
+        toParty    : Party
+        amount     : Decimal
+        subPurpose : Text
+      controller recipient
+      do
+        assertMsg "Amount must be positive" (amount > 0.0)
+        assertMsg "Amount exceeds allocation" (amount <= amountGbp)
+
+        create BudgetAllocation with
+          allocator  = recipient
+          recipient  = toParty
+          fiscalYear = fiscalYear
+          amountGbp  = amount
+          purpose    = subPurpose
+
+-- ============================================================
+-- PRIVACY ENHANCED ALLOCATION
+-- ============================================================
+
+template BudgetAllocationPrivacy
+  with
+    allocator   : Party
+    recipient   : Party
+    fiscalYear  : Text
+    amountGbp   : Decimal
+    purpose     : Text
+    purposeHash : Commitment
+  where
+    signatory allocator
+    observer recipient
+
+    choice SubAllocatePrivacy
+      : ContractId BudgetAllocationPrivacy
+      with
+        toParty        : Party
+        amount         : Decimal
+        subPurpose     : Text
+        subPurposeHash : Commitment
+      controller recipient
+      do
+        assertMsg "Amount must be positive" (amount > 0.0)
+
+        create BudgetAllocationPrivacy with
+          allocator   = recipient
+          recipient   = toParty
+          fiscalYear  = fiscalYear
+          amountGbp   = amount
+          purpose     = subPurpose
+          purposeHash = subPurposeHash
+
+    nonconsuming choice RevealPurpose : Text
+      controller allocator
+      do
+        pure purpose
+
+-- ============================================================
+-- TOKENISATION REQUEST
+-- ============================================================
+
+template TokenisationRequest
+  with
+    allocator  : Party
+    recipient  : Party
+    fiscalYear : Text
+    amountGbp  : Decimal
+    tokenId    : Text
+  where
+    signatory allocator
+    observer recipient
+
+    choice MintToken
+      : ContractId NhsFundingToken
+      controller allocator
+      do
+        create NhsFundingToken with
+          issuer        = allocator
+          owner         = recipient
+          tokenId       = tokenId
+          fiscalYear    = fiscalYear
+          amountGbp     = amountGbp
+          amountCommit  = createAmountCommitment amountGbp
+
+-- ============================================================
+-- NHS FUNDING TOKEN
+-- ============================================================
+
+template NhsFundingToken
+  with
+    issuer        : Party
+    owner         : Party
+    tokenId       : Text
+    fiscalYear    : Text
+    amountGbp     : Decimal
+    amountCommit  : Commitment
+  where
+    signatory issuer, owner
+
+    choice TransferToken
+      : ContractId NhsFundingToken
+      with
+        newOwner : Party
+      controller owner
+      do
+        create NhsFundingToken with
+          issuer       = issuer
+          owner        = newOwner
+          tokenId      = tokenId
+          fiscalYear   = fiscalYear
+          amountGbp    = amountGbp
+          amountCommit = amountCommit
+
+    choice BurnToken : ()
+      controller owner
+      do
+        archive self
+
+-- ============================================================
+-- SPEND COMMITMENT
+-- ============================================================
+
+template SpendCommitment
+  with
+    trust         : Party
+    commissioner  : Party
+    auditor       : Party
+    category      : Text
+    amountGbp     : Decimal
+    period        : Text
+    supplier      : Optional Party
+    paymentAmount : Optional Decimal
+  where
+    signatory trust
+    observer commissioner
+    observer (optional [] (\p -> [p]) supplier)
+
+    choice Countersign
+      : ContractId ReconciledSpend
+      controller commissioner
+      do
+        create ReconciledSpend with
+          trust          = trust
+          commissioner   = commissioner
+          auditor        = auditor
+          category       = category
+          amountGbp      = amountGbp
+          period         = period
+          supplier       = supplier
+          settlementTxId = None
+
+-- ============================================================
+-- RECONCILED SPEND
+-- ============================================================
+
+template ReconciledSpend
+  with
+    trust          : Party
+    commissioner   : Party
+    auditor        : Party
+    category       : Text
+    amountGbp      : Decimal
+    period         : Text
+    supplier       : Optional Party
+    settlementTxId : Optional Text
+  where
+    signatory trust, commissioner
+    observer auditor
+    observer (optional [] (\p -> [p]) supplier)
+
+-- ============================================================
+-- PRIVACY SPEND COMMITMENT
+-- ============================================================
+
+template SpendCommitmentPrivacy
+  with
+    trust           : Party
+    commissioner    : Party
+    auditor         : Party
+    category        : Text
+    amountGbp       : Decimal
+    amountCommit    : Commitment
+    period          : Text
+    supplier        : Optional Party
+    supplierCommit  : Optional Commitment
+    paymentAmount   : Optional Decimal
+  where
+    signatory trust
+    observer commissioner
+
+    choice CountersignPrivacy
+      : ContractId ReconciledSpendPrivacy
+      controller commissioner
+      do
+        create ReconciledSpendPrivacy with
+          trust          = trust
+          commissioner   = commissioner
+          auditor        = auditor
+          category       = category
+          amountGbp      = amountGbp
+          amountCommit   = amountCommit
+          period         = period
+          supplier       = supplier
+          supplierCommit = supplierCommit
+          settlementTxId = None
+
+-- ============================================================
+-- PRIVACY RECONCILED SPEND
+-- ============================================================
+
+template ReconciledSpendPrivacy
+  with
+    trust           : Party
+    commissioner    : Party
+    auditor         : Party
+    category        : Text
+    amountGbp       : Decimal
+    amountCommit    : Commitment
+    period          : Text
+    supplier        : Optional Party
+    supplierCommit  : Optional Commitment
+    settlementTxId  : Optional Text
+  where
+    signatory trust, commissioner
+    observer auditor
+
+    nonconsuming choice VerifyAmount : Bool
+      controller auditor
+      do
+        pure (hashText (show amountGbp) == amountCommit)
+
+-- ============================================================
+-- PRIVATE SETTLEMENT
+-- ============================================================
+
+template PrivateSettlement
+  with
+    trust           : Party
+    commissioner    : Party
+    auditor         : Party
+    tokenId         : Text
+    amountCommit    : Commitment
+    purposeCommit   : Commitment
+    settlementRef   : Optional Text
+  where
+    signatory trust, commissioner
+    observer auditor
+
+    nonconsuming choice VerifySettlement : Bool
+      controller auditor
+      do
+        pure True
+
+-- ============================================================
+-- PROOF OF PURPOSE
+-- ============================================================
+
+template ProofOfPurpose
+  with
+    commitmentCid : ContractId BudgetAllocationPrivacy
+    preImage      : Text
+    hashValue     : Commitment
+    verifier      : Party
+  where
+    signatory verifier
+
+    nonconsuming choice VerifyPurpose : Bool
+      controller verifier
+      do
+        pure (hashText preImage == hashValue)
+
+-- ============================================================
+-- PROOF OF AMOUNT
+-- ============================================================
+
+template ProofOfAmount
+  with
+    commitmentCid : ContractId SpendCommitmentPrivacy
+    preImage      : Text
+    hashValue     : Commitment
+    verifier      : Party
+  where
+    signatory verifier
+
+    nonconsuming choice VerifyAmountProof : Bool
+      controller verifier
+      do
+        pure (hashText preImage == hashValue)
+
+-- ============================================================
+-- PROOF OF SUPPLIER
+-- ============================================================
+
+template ProofOfSupplier
+  with
+    commitmentCid : ContractId SpendCommitmentPrivacy
+    preImage      : Text
+    hashValue     : Commitment
+    verifier      : Party
+  where
+    signatory verifier
+
+    nonconsuming choice VerifySupplierProof : Bool
+      controller verifier
+      do
+        pure (hashText preImage == hashValue)
+
+-- ============================================================
+-- AUDIT RECORD
+-- ============================================================
+
+template AuditRecord
+  with
+    auditor      : Party
+    target       : Party
+    referenceId  : Text
+    notes        : Text
+    timestamp    : Time
+  where
+    signatory auditor
+    observer target
+
+-- ============================================================
+-- TOKEN REDEMPTION
+-- ============================================================
+
+template TokenRedemption
+  with
+    owner       : Party
+    issuer      : Party
+    tokenId     : Text
+    amountGbp   : Decimal
+  where
+    signatory owner
+    observer issuer
+
+    choice Redeem : ()
+      controller owner
+      do
+        archive self
+
+-- ============================================================
+-- END OF FILE
+-- ============================================================

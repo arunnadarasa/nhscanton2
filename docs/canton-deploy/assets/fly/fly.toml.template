@@ -1,0 +1,47 @@
+# Rendered by scripts/deploy-canton-fly.sh — __APP_NAME__ and __REGION__ are
+# substituted via sed. Mirrors participant.fly.toml but parameterised.
+
+app = "__APP_NAME__"
+primary_region = "__REGION__"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # JVM heap sized for a 4 GB Fly machine: leave ~1.5 GB for native + OS.
+  JAVA_OPTS = "-Xms512m -Xmx2560m"
+
+# In-memory storage — no volume needed. Add a [[mounts]] block if you switch
+# canton.conf to postgres/h2 file storage.
+
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 7575
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "60s"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus     = 2
+  memory_mb = 4096

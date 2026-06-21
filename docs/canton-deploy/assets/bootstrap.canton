@@ -1,0 +1,25 @@
+// Bootstrap for the single-process Canton 3.4 topology in canton.conf.
+// Uses the official 3.4 macros (bootstrap.synchronizer_local + connect_local).
+
+nodes.local.start()
+
+bootstrap.synchronizer_local()
+
+participant1.synchronizers.connect_local(sequencer1, alias = "local")
+
+val partyHints = Seq(
+  "DHSC",
+  "NHSEngland",
+  "Auditor",
+  "ICB-QOQ", "ICB-QF7", "ICB-QH8",
+  "Trust-RJ1", "Trust-RXH", "Trust-RWE"
+)
+
+partyHints.foreach { hint =>
+  if (!participant1.parties.list().exists(_.party.toString.startsWith(s"$hint::"))) {
+    participant1.parties.enable(hint)
+  }
+}
+
+println("Allocated parties:")
+participant1.parties.list().foreach(p => println("  " + p.party))

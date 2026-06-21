@@ -1,0 +1,19 @@
+# Build with the Canton 3.x toolchain: `dpm build`
+# (The legacy `daml` Assistant is deprecated in 3.4 and removed in 3.5.)
+sdk-version: 3.5.1
+name: nhs-budget
+source: .
+version: 0.1.0
+dependencies:
+  - daml-prim
+  - daml-stdlib
+# USDCx (wrapped USDC) — DevNet xReserve programme.
+# Drop the published DAR into ./deps and uncomment the data-dependency below,
+# then uncomment the SettleAndCountersign choice in Nhs.daml.
+# Source: https://github.com/digital-asset/xreserve-deposits
+# data-dependencies:
+#   - deps/usdcx-1.0.0.dar
+parties:
+  - DHSC
+  - NHSEngland
+  - Auditor

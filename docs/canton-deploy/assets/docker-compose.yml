@@ -1,0 +1,84 @@
+# Single-host Canton 3.4 stack: participant + embedded sequencer/mediator,
+# built-in JSON Ledger API v2 (no http-json sidecar), Postgres, optional
+# Caddy TLS terminator.
+#
+# Usage:
+#   docker compose up -d                    # dev (no TLS, exposes 7575)
+#   docker compose --profile prod up -d     # prod (Caddy on 80/443)
+#
+# Env vars (.env file):
+#   POSTGRES_PASSWORD   - Postgres superuser password
+#   CANTON_AUTH_SECRET  - HMAC secret used to verify HS256 JWTs (dev only)
+#   PUBLIC_HOSTNAME     - DNS name for Caddy (prod profile only)
+#   ACME_EMAIL          - Let's Encrypt contact (prod profile only)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: canton
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: canton
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canton"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  canton:
+    # Canton 3.x images are published on Google Artifact Registry; the old
+    # `digitalasset/canton-open-source` repo on Docker Hub is deprecated.
+    image: europe-docker.pkg.dev/da-images/public/docker/canton-participant:3.4.8
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CANTON_AUTH_SECRET: ${CANTON_AUTH_SECRET}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - daemon
+      - --config=/canton/config/canton.conf
+      - --bootstrap=/canton/config/bootstrap.canton
+    volumes:
+      - ./canton.conf:/canton/config/canton.conf:ro
+      - ./bootstrap.canton:/canton/config/bootstrap.canton:ro
+      - canton_data:/canton/data
+    ports:
+      # Expose only in dev / LocalNet usage. In prod profile, keep these off
+      # and let Caddy proxy 7575 internally.
+      - "5011:5011"   # ledger-api (gRPC)  -- close on prod firewall
+      - "7575:7575"   # JSON Ledger API v2 (HTTP)  -- Caddy proxies in prod
+    healthcheck:
+      # v2 has no /livez; ledger-end is a cheap admin-free GET on the JSON API.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7575/v2/state/ledger-end -H 'Authorization: Bearer dev' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    profiles: ["prod"]
+    depends_on:
+      canton:
+        condition: service_healthy
+    environment:
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  canton_data:
+  caddy_data:
+  caddy_config:

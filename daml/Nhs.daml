@@ -1,0 +1,89 @@
+-- NHS Budget Allocation + Trust Reconciliation
+-- Canton privacy: each contract is only disclosed to its signatories + observers.
+-- Build with `dpm build` (Daml SDK 3.5+).
+module Nhs where
+
+template BudgetAllocation
+  with
+    allocator  : Party    -- DHSC or NHSEngland
+    recipient  : Party    -- NHSEngland or ICB
+    fiscalYear : Text
+    amountGbp  : Decimal
+    purpose    : Text
+  where
+    signatory allocator
+    observer  recipient
+
+    -- Recipient can pass a slice down the chain (NHSE -> ICB, ICB -> Trust)
+    choice SubAllocate : ContractId BudgetAllocation
+      with
+        toParty    : Party
+        amount     : Decimal
+        subPurpose : Text
+      controller recipient
+      do
+        assertMsg "amount must be > 0"      (amount > 0.0)
+        assertMsg "amount exceeds envelope" (amount <= amountGbp)
+        create BudgetAllocation with
+          allocator  = recipient
+          recipient  = toParty
+          fiscalYear = fiscalYear
+          amountGbp  = amount
+          purpose    = subPurpose
+
+template SpendCommitment
+  with
+    trust         : Party
+    commissioner  : Party     -- ICB
+    auditor       : Party
+    category      : Text      -- Staff / Drugs / Estates / Other
+    amountGbp     : Decimal
+    period        : Text
+    supplier      : Optional Party    -- when set, this is a settleable supplier invoice
+    paymentAmount : Optional Decimal  -- USDCx units; defaults to amountGbp 1:1
+  where
+    signatory trust
+    observer  commissioner
+    observer  (optional [] (\p -> [p]) supplier)
+
+    -- Pure accounting countersignature (no money movement).
+    choice Countersign : ContractId ReconciledSpend
+      controller commissioner
+      do
+        create ReconciledSpend with
+          trust          = trust
+          commissioner   = commissioner
+          auditor        = auditor
+          category       = category
+          amountGbp      = amountGbp
+          period         = period
+          supplier       = supplier
+          settlementTxId = None
+
+    -- FUTURE: Atomic settlement against USDCx (DevNet xReserve programme).
+    -- See docs/canton-deploy/06-usdcx.md. Requires the Usdcx DAR as a
+    -- data-dependency in daml.yaml. Sketch:
+    --
+    --   choice SettleAndCountersign : ContractId ReconciledSpend
+    --     with holdingCid : ContractId Usdcx.Holding; supplierParty : Party
+    --     controller commissioner
+    --     do
+    --       _ <- exercise holdingCid Usdcx.Transfer with
+    --              newOwner = supplierParty
+    --              amount   = optional amountGbp identity paymentAmount
+    --       create ReconciledSpend with supplier = Some supplierParty; ...
+
+template ReconciledSpend
+  with
+    trust          : Party
+    commissioner   : Party
+    auditor        : Party
+    category       : Text
+    amountGbp      : Decimal
+    period         : Text
+    supplier       : Optional Party
+    settlementTxId : Optional Text
+  where
+    signatory trust, commissioner
+    observer  auditor
+    observer  (optional [] (\p -> [p]) supplier)

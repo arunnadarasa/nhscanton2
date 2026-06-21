@@ -1,0 +1,58 @@
+# Canton 3.4 participant on Fly.io. Single app: the built-in JSON Ledger API
+# v2 is exposed publicly on 443 (the separate http-json sidecar is gone in 3.x).
+# The gRPC ledger-api on :5011 stays on Fly's private IPv6 mesh.
+
+app = "nhs-canton-participant"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  JAVA_OPTS = "-Xms512m -Xmx3000m"
+
+[[mounts]]
+  source = "canton_data"
+  destination = "/canton/data"
+
+# Canton participants are stateful: only ONE machine may run at a time,
+# otherwise allocations/contracts land on different participants and
+# JSON Ledger API calls return UNKNOWN_RESOURCE for parties allocated
+# on the "other" machine.
+[http_service]
+  internal_port = 7575
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+
+# Public JSON Ledger API v2.
+[[services]]
+  protocol = "tcp"
+  internal_port = 7575
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "5s"
+    method = "get"
+    path = "/v2/state/ledger-end"
+    protocol = "http"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus     = 2
+  memory_mb = 4096

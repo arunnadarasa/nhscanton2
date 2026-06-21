@@ -1,0 +1,437 @@
+// POST /api/public/admin/deploy
+//
+// Token-gated runtime bootstrap. Branches on CANTON_MODE:
+//   - localnet (Fly self-hosted): uploads the bundled DAR, allocates
+//     parties, creates the runtime user, grants rights, verifies.
+//   - devnet (Seaport 5N Sandbox): DAR upload is done by Seaport UI, so
+//     this skips upload and just allocates parties + grants rights via
+//     the Validator Admin API using an OIDC bootstrap token.
+//
+// Caller protection: `x-deploy-token` header must match DEPLOY_ADMIN_TOKEN.
+
+import { createFileRoute } from "@tanstack/react-router";
+
+import { getCantonEndpoints, getCantonMode } from "@/lib/canton/mode.server";
+import { ICBS, TRUSTS } from "@/lib/nhs/data";
+
+const DEFAULT_USER_ID = "lovable-nhs-app";
+const DAR_ASSET_PATH = "/dars/nhs-budget-0.1.0.dar";
+
+function defaultParties() {
+  return [
+    "DHSC",
+    "NHSEngland",
+    "Auditor",
+    ...ICBS.map((i) => `ICB-${i.code}`),
+    ...TRUSTS.map((t) => `Trust-${t.code}`),
+  ];
+}
+
+type DeployBody = { parties?: string[]; userId?: string };
+type AllocResult = { hint: string; partyId?: string; error?: string };
+
+export const Route = createFileRoute("/api/public/admin/deploy")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const adminToken = process.env.DEPLOY_ADMIN_TOKEN;
+        const mode = getCantonMode();
+        const { ledgerApi, adminApi } = getCantonEndpoints();
+        if (!adminToken || !ledgerApi || mode === "memory") {
+          return Response.json(
+            {
+              error: "missing-config",
+              missing: {
+                DEPLOY_ADMIN_TOKEN: !adminToken,
+                CANTON_JSON_API_URL: !ledgerApi,
+                CANTON_MODE: mode === "memory" ? "memory (set CANTON_MODE=localnet or devnet)" : false,
+              },
+            },
+            { status: 500 },
+          );
+        }
+        if (request.headers.get("x-deploy-token") !== adminToken) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
+        let body: DeployBody = {};
+        try {
+          const text = await request.text();
+          if (text.trim()) body = JSON.parse(text) as DeployBody;
+        } catch {
+          return Response.json({ error: "invalid-json" }, { status: 400 });
+        }
+
+        const parties = (body.parties ?? defaultParties()).filter(
+          (p) => typeof p === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(p),
+        );
+        let userId = body.userId ?? DEFAULT_USER_ID;
+        const adminBase = (adminApi ?? ledgerApi).replace(/\/+$/, "");
+        const ledgerBase = ledgerApi.replace(/\/+$/, "");
+
+        // 1. Mint admin token (RS256 for localnet, OIDC client_credentials for devnet).
+        const { getAdminAccessToken, getRuntimeAccessToken, getRuntimeLedgerUserId } = await import(
+          "@/lib/canton/tokens.server"
+        );
+        let adminJwt: string;
+        try {
+          adminJwt = await getAdminAccessToken();
+        } catch (e) {
+          return Response.json(
+            { mode, error: "mint-admin-token-failed", detail: e instanceof Error ? e.message : String(e) },
+            { status: 500 },
+          );
+        }
+        const auth = { Authorization: `Bearer ${adminJwt}` };
+
+        // On Devnet, Canton's user-based auth ties the token `sub` (or
+        // legacy `applicationId` claim) to the ledger user id. Commands
+        // submitted with any other user id are rejected with a
+        // "security-sensitive" 403. Override the user id only when the
+        // caller did not pin one explicitly.
+        let runtimeUserId: string | undefined;
+        if (mode === "devnet" && !body.userId) {
+          try {
+            runtimeUserId = await getRuntimeLedgerUserId();
+            if (runtimeUserId) userId = runtimeUserId;
+          } catch {
+            // fall back to DEFAULT_USER_ID — verify step will surface mismatch
+          }
+        }
+
+        // 2. Upload DAR — localnet only. On devnet, Seaport already did it.
+        let darInfo: { skipped?: true; bytes?: number; status?: number } = { skipped: true };
+        if (mode === "localnet") {
+          const darUrl = new URL(DAR_ASSET_PATH, request.url).toString();
+          const darRes = await fetch(darUrl);
+          if (!darRes.ok) {
+            return Response.json(
+              { mode, step: "fetch-dar", url: darUrl, status: darRes.status },
+              { status: 500 },
+            );
+          }
+          const darBytes = await darRes.arrayBuffer();
+          const uploadRes = await fetch(`${adminBase}/v2/dars`, {
+            method: "POST",
+            headers: { ...auth, "Content-Type": "application/octet-stream" },
+            body: darBytes,
+          });
+          const uploadText = await uploadRes.text();
+          if (!uploadRes.ok && uploadRes.status !== 409) {
+            return Response.json(
+              { mode, step: "upload-dar", status: uploadRes.status, body: uploadText.slice(0, 500) },
+              { status: 502 },
+            );
+          }
+          darInfo = { bytes: darBytes.byteLength, status: uploadRes.status };
+        }
+
+        // 3. Allocate parties (idempotent).
+        // 2b. Discover the participant's connected synchronizer. On Devnet/Splice
+        //     party allocation must be scoped to it so the PartyToParticipant
+        //     topology tx is broadcast to the global synchronizer, otherwise
+        //     ledger commands hit UNKNOWN_INFORMEES.
+        let synchronizerId: string | undefined;
+        let synchronizerInfo: unknown = "skipped";
+        if (mode === "devnet") {
+          const { fetchConnectedSynchronizers, pickPrimarySynchronizerId } =
+            await import("@/lib/canton/synchronizers.server");
+          const sd = await fetchConnectedSynchronizers(ledgerBase, adminJwt);
+          synchronizerInfo = sd;
+          if (!sd.ok || sd.synchronizers.length === 0) {
+            return Response.json(
+              {
+                mode,
+                step: "discover-synchronizer",
+                detail:
+                  "Validator participant has no connected synchronizer. Party allocation cannot register topology. Contact Seaport support.",
+                synchronizerInfo: sd,
+              },
+              { status: 502 },
+            );
+          }
+          synchronizerId = pickPrimarySynchronizerId(sd.synchronizers);
+        }
+
+        // Re-use previously persisted party IDs so re-running deploy after a
+        // successful party allocation doesn't fail with "Party already exists"
+        // (Canton truncates the party-id in that error, so we can't recover it
+        // from the response cause).
+        const { listParties } = await import("@/lib/canton/parties.server");
+        const existingRows = await listParties().catch(() => []);
+        const existing = new Map(existingRows.map((r) => [r.logical_name, r.party_id]));
+
+        const allocs: AllocResult[] = [];
+        for (const hint of parties) {
+          const known = existing.get(hint);
+          if (known) {
+            allocs.push({ hint, partyId: known });
+            continue;
+          }
+          try {
+            const allocBody: Record<string, unknown> = { partyIdHint: hint };
+            if (synchronizerId) allocBody.synchronizerId = synchronizerId;
+            const res = await fetch(`${adminBase}/v2/parties`, {
+              method: "POST",
+              headers: { ...auth, "Content-Type": "application/json" },
+              body: JSON.stringify(allocBody),
+            });
+            const json = (await res.json().catch(() => ({}))) as {
+              partyDetails?: { party?: string };
+              party?: string;
+            };
+            let partyId = json.partyDetails?.party ?? json.party;
+            let allocErr: string | undefined;
+            if (!res.ok) {
+              const rawErr = JSON.stringify(json);
+              allocErr = `status ${res.status}: ${rawErr.slice(0, 240)}`;
+              if (res.status === 409 || res.status === 400) {
+                // Canton encodes "Party already exists: party DHSC::1220abc... is already allocated"
+                // directly in the cause — extract from there first.
+                const m = rawErr.match(
+                  new RegExp(`${hint.replace(/[-\\^$*+?.()|[\\]{}]/g, "\\\\$&")}::[0-9a-fA-F]+`),
+                );
+                if (m) partyId = m[0];
+                if (!partyId) {
+                  const listRes = await fetch(`${adminBase}/v2/parties`, { headers: auth });
+                  const list = (await listRes.json().catch(() => ({}))) as {
+                    partyDetails?: Array<{ party: string }>;
+                  };
+                  const found = list.partyDetails?.find((p) => p.party.startsWith(`${hint}::`));
+                  if (found) partyId = found.party;
+                }
+              }
+            }
+            if (!partyId) {
+              allocs.push({ hint, error: allocErr ?? "no party id returned" });
+              continue;
+            }
+            // On Devnet, verify the party is hosted (isLocal) — otherwise
+            // it was allocated locally without synchronizer registration and
+            // every command involving it will fail with UNKNOWN_INFORMEES.
+            if (mode === "devnet") {
+              const vr = await fetch(
+                `${adminBase}/v2/parties/${encodeURIComponent(partyId)}`,
+                { headers: auth },
+              );
+              const vt = await vr.text();
+              let vj: { partyDetails?: Array<{ isLocal?: boolean }> } = {};
+              try { vj = JSON.parse(vt); } catch { /* ignore */ }
+              const isLocal = vj.partyDetails?.[0]?.isLocal === true;
+              if (!vr.ok || !isLocal) {
+                allocs.push({
+                  hint,
+                  partyId,
+                  error: `not registered on synchronizer (isLocal=${isLocal}, lookup status ${vr.status})${allocErr ? `; allocate: ${allocErr}` : ""}`,
+                });
+                continue;
+              }
+            }
+            allocs.push({ hint, partyId });
+          } catch (e) {
+            allocs.push({ hint, error: e instanceof Error ? e.message : "fetch-failed" });
+          }
+        }
+
+        // 3a. If any party failed to register on the synchronizer, abort and
+        //     do NOT persist — keeps the app from using local-only party IDs
+        //     that would later trip UNKNOWN_INFORMEES at command submission.
+        const failed = allocs.filter((a) => a.error);
+        if (failed.length > 0) {
+          return Response.json(
+            {
+              mode,
+              step: "allocate-parties",
+              detail:
+                mode === "devnet"
+                  ? "One or more parties were not registered on the connected synchronizer. Existing party IDs were not persisted."
+                  : "One or more party allocations failed.",
+              synchronizerId,
+              allocs,
+            },
+            { status: 502 },
+          );
+        }
+
+        // 3b. Persist the logical-name → party-id map.
+        const rowsToUpsert = allocs
+          .filter((a): a is { hint: string; partyId: string } => !!a.partyId)
+          .map((a) => ({ logical_name: a.hint, party_id: a.partyId }));
+        try {
+          const { upsertParties } = await import("@/lib/canton/parties.server");
+          await upsertParties(rowsToUpsert);
+        } catch (e) {
+          return Response.json(
+            {
+              mode,
+              step: "persist-parties",
+              detail: e instanceof Error ? e.message : String(e),
+              allocs,
+            },
+            { status: 500 },
+          );
+        }
+
+        // 4. Create the ledger user (409 = already exists).
+        const userRes = await fetch(`${adminBase}/v2/users`, {
+          method: "POST",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user: {
+              id: userId,
+              primaryParty: "",
+              isDeactivated: false,
+              metadata: { resourceVersion: "", annotations: {} },
+              identityProviderId: "",
+            },
+          }),
+        });
+        const userBody = await userRes.text();
+        const userCreated = userRes.ok || userRes.status === 409;
+        if (!userCreated) {
+          return Response.json(
+            { mode, step: "create-user", status: userRes.status, body: userBody.slice(0, 800) },
+            { status: 502 },
+          );
+        }
+
+        // 5. Grant rights: CanReadAs on every party + CanActAs on non-auditor parties.
+        const rights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
+        for (const a of allocs) {
+          if (!a.partyId) continue;
+          rights.push({ kind: { CanReadAs: { value: { party: a.partyId } } } });
+          if (a.hint !== "Auditor") {
+            rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
+          }
+        }
+
+        let rightsResult: unknown = "skipped";
+        if (rights.length > 0) {
+          const r = await fetch(
+            `${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`,
+            {
+              method: "POST",
+              headers: { ...auth, "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, identityProviderId: "", rights }),
+            },
+          );
+          const rb = await r.text();
+          rightsResult = { status: r.status, ok: r.ok, body: rb.slice(0, 800) };
+          if (!r.ok && r.status !== 409) {
+            return Response.json(
+              { mode, step: "grant-rights", status: r.status, body: rb.slice(0, 800), allocs },
+              { status: 502 },
+            );
+          }
+        }
+
+        // 6. Verify the runtime user can authenticate against the Ledger API.
+        let verify: { ok: boolean; status?: number; body?: string; error?: string };
+        try {
+          const runtimeJwt = await getRuntimeAccessToken();
+          const vr = await fetch(`${ledgerBase}/v2/state/ledger-end`, {
+            headers: { Authorization: `Bearer ${runtimeJwt}` },
+          });
+          const vb = await vr.text();
+          verify = { ok: vr.ok, status: vr.status, body: vb.slice(0, 400) };
+          if (!vr.ok) {
+            return Response.json(
+              { mode, step: "verify-runtime-user", verify, allocs, rightsResult },
+              { status: 502 },
+            );
+          }
+        } catch (e) {
+          verify = { ok: false, error: e instanceof Error ? e.message : String(e) };
+          return Response.json(
+            { mode, step: "verify-runtime-user", verify, allocs, rightsResult },
+            { status: 502 },
+          );
+        }
+
+        // 7. Verify the user actually has the rights we asked for.
+        let rightsVerify: {
+          ok: boolean;
+          listed: number;
+          missingReadAs: string[];
+          missingActAs: string[];
+          error?: string;
+        } = { ok: true, listed: 0, missingReadAs: [], missingActAs: [] };
+        try {
+          const lr = await fetch(
+            `${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`,
+            { headers: auth },
+          );
+          const lj = (await lr.json().catch(() => ({}))) as {
+            rights?: Array<{
+              kind?: {
+                CanActAs?: { value?: { party?: string } };
+                CanReadAs?: { value?: { party?: string } };
+              };
+            }>;
+          };
+          const readSet = new Set<string>();
+          const actSet = new Set<string>();
+          for (const r of lj.rights ?? []) {
+            const read = r.kind?.CanReadAs?.value?.party;
+            const act = r.kind?.CanActAs?.value?.party;
+            if (read) readSet.add(read);
+            if (act) actSet.add(act);
+          }
+          const missingReadAs: string[] = [];
+          const missingActAs: string[] = [];
+          for (const a of allocs) {
+            if (!a.partyId) continue;
+            if (!readSet.has(a.partyId)) missingReadAs.push(a.hint);
+            if (a.hint !== "Auditor" && !actSet.has(a.partyId)) {
+              missingActAs.push(a.hint);
+            }
+          }
+          rightsVerify = {
+            ok: lr.ok && missingReadAs.length === 0 && missingActAs.length === 0,
+            listed: (lj.rights ?? []).length,
+            missingReadAs,
+            missingActAs,
+          };
+          if (!rightsVerify.ok) {
+            return Response.json(
+              { mode, step: "verify-rights", rightsVerify, rightsResult, allocs },
+              { status: 502 },
+            );
+          }
+        } catch (e) {
+          rightsVerify = {
+            ok: false,
+            listed: 0,
+            missingReadAs: [],
+            missingActAs: [],
+            error: e instanceof Error ? e.message : String(e),
+          };
+          return Response.json(
+            { mode, step: "verify-rights", rightsVerify, allocs, rightsResult },
+            { status: 502 },
+          );
+        }
+
+        return Response.json({
+          ok: true,
+          mode,
+          endpoints: { ledgerApi: ledgerBase, adminApi: adminBase },
+          synchronizerId,
+          synchronizerInfo,
+          dar: darInfo,
+          parties: allocs,
+          user: {
+            id: userId,
+            derivedFromToken: runtimeUserId,
+            created: userCreated,
+            createStatus: userRes.status,
+            createBody: userBody.slice(0, 400),
+            rights: rightsResult,
+          },
+          verify,
+          rightsVerify,
+        });
+      },
+    },
+  },
+});
