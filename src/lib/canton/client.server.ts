@@ -190,6 +190,7 @@ export async function countersignInvoice(
       invoice.contractId,
       "CountersignInvoice",
       {},
+      invoice.payload.commissioner,
     );
     return {
       contractId: cid,
