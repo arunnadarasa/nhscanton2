@@ -114,7 +114,6 @@ export async function createSpendCommitment(
   payload: SpendCommitment,
 ): Promise<Contract<SpendCommitment>> {
   const observers = [payload.commissioner];
-  if (payload.supplier) observers.push(payload.supplier);
   if (isLive()) return liveCreate("Nhs:SpendCommitment", payload, payload.trust);
   return memCreate("Nhs:SpendCommitment", payload, [payload.trust], observers);
 }
