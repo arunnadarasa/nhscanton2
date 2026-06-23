@@ -72,7 +72,13 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     }
   }
 
-  let darInfo: { skipped?: true; bytes?: number; status?: number; body?: string } = { skipped: true };
+  let darInfo: {
+    skipped?: true;
+    bytes?: number;
+    status?: number;
+    body?: string;
+    alreadyVetted?: true;
+  } = { skipped: true };
   {
     const darUrl = new URL(DAR_ASSET_PATH, opts.baseUrl).toString();
     const darRes = await fetch(darUrl);
