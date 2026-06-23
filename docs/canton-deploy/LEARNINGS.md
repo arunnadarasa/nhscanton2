@@ -4,6 +4,9 @@ A debrief of what it took to get a Canton 3.4 participant running on Fly.io with
 
 > **Status update (Encode Hackathon).** The Fly.io self-hosted path is **paused**. Encode provisioned us with **Seaport-managed Devnet** access (a 5N Sandbox validator, OIDC `client_credentials` for both bootstrap and runtime users). Devnet gives us a real shared synchronizer, no infra ops, no $20/mo bill — so all active demos now run on Devnet via the header pill. The Fly.io code path still works (`CANTON_FLY_*` env namespace + `localnet` toggle) and everything below remains accurate for anyone who wants to self-host. See **"Encode Hackathon → Seaport Devnet shortcut"** below for the path we now recommend by default.
 
+> **Update (2026-06-23) — devnet is live with mock-USDCx.** Self-deploy + mint-mock-usdcx now run cleanly against Devnet via a per-request cookie override (`Cookie: canton_network=seaport`) — no need to flip `CANTON_MODE` globally. All 7 NHS Trusts hold 200,000,000.00 mock-USDCx each, issued by Auditor, on the Five North devnet validator. Two new lessons from this turn are written up below under **"Devnet bring-up: mock-USDCx mint"**.
+
+
 ## TL;DR
 
 
