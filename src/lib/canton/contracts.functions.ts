@@ -7,13 +7,14 @@ import { z } from "zod";
 
 import { TEMPLATES, type TemplateId } from "./templates";
 import type { Json } from "@/integrations/supabase/types";
-import type { BudgetAllocation, ReconciledSpend, SpendCommitment } from "./types";
+import type { BudgetAllocation, Invoice, ReconciledSpend, SpendCommitment } from "./types";
 
 
 const templateIdSchema = z.enum([
   "Nhs:BudgetAllocation",
   "Nhs:SpendCommitment",
   "Nhs:ReconciledSpend",
+  "Nhs:Invoice",
 ]) satisfies z.ZodType<TemplateId>;
 
 const createSchema = z.object({
