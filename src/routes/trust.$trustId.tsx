@@ -56,6 +56,12 @@ export const Route = createFileRoute("/trust/$trustId")({
         queryFn: () => getUsdcxBalance({ data: { party } }),
       }),
     );
+    context.queryClient.ensureQueryData(
+      queryOptions({
+        queryKey: ["invoice", "trust", trust.code],
+        queryFn: () => getInvoicesForParty({ data: { party } }),
+      }),
+    );
   },
   component: TrustPage,
   notFoundComponent: () => (
