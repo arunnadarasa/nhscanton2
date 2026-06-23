@@ -228,7 +228,6 @@ Represents approved and reconciled expenditure following commissioner review.
 - Trust
 - Commissioner
 - Auditor
-- Optional Supplier
 
 ### Data Model
 
@@ -240,13 +239,62 @@ Represents approved and reconciled expenditure following commissioner review.
 | category | Text | Spending category |
 | amountGbp | Decimal | Approved expenditure (£) |
 | period | Text | Reporting period |
-| supplier | Optional Party | Supplier receiving payment |
+| supplierName | Optional Text | Supplier label (carried through from SpendCommitment / Invoice) |
 | settlementTxId | Optional Text | Settlement transaction reference |
 
 ### Purpose
 - Maintains an immutable record of approved expenditure.
 - Supports auditing and compliance processes.
 - Provides a complete approval history for spending activities.
+
+---
+
+## Invoice
+
+Supplier-facing parallel to `SpendCommitment` — a Trust raises an invoice
+record that the commissioner countersigns into a `ReconciledSpend`.
+
+### Visibility
+- Trust (signatory)
+- Commissioner (observer)
+
+### Data Model
+
+| Field | Type | Description |
+|---------|---------|-------------|
+| trust | Party | NHS Trust raising the invoice |
+| commissioner | Party | Responsible Integrated Care Board |
+| auditor | Party | Auditor (carried through on reconciliation) |
+| invoiceRef | Text | Trust-side invoice reference |
+| category | Text | Spending category |
+| amountGbp | Decimal | Invoice amount (£) |
+| period | Text | Reporting period |
+| supplierName | Optional Text | Supplier label (human-readable; not an on-chain party) |
+
+### Choice: CountersignInvoice
+
+Controller: `commissioner`. Archives the `Invoice` and creates a
+`ReconciledSpend` carrying the same `supplierName`, with `settlementTxId = None`.
+
+---
+
+## Lessons learned
+
+Hard-won from getting NHS Ledger live on Canton:
+
+- **Free text is `Optional Text`, never `Optional Party`.** Modelling a
+  supplier label as a `Party` made every command target `UNKNOWN_INFORMEES`
+  on Devnet. If both a human label and an on-chain payee are needed, use
+  two fields: `supplierName : Optional Text` + `supplierParty : Party` (the
+  latter passed as a choice argument when actually settling).
+- **Two JWT subjects, two purposes.** `participant_admin` for node ops
+  (DAR upload, party allocation). A separate runtime user for ledger
+  commands — the validator enforces `userId == sub` of the runtime token.
+- **Schema migrations: rename the package, not the version.** A
+  non-backwards-compatible change to an installed template fails with
+  `KNOWN_PACKAGE_VERSION`. Bump the package *name* in `daml.yaml`
+  (e.g. `nhs-budget-app` → `nhs-budget-app-v2`), rebuild, and update
+  every `#nhs-budget` reference in TypeScript.
 
 
 ## Sources
