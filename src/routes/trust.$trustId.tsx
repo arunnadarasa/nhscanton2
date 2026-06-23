@@ -102,6 +102,12 @@ function TrustPage() {
       queryFn: () => getUsdcxBalance({ data: { party } }),
     }),
   ).data;
+  const invoices = useSuspenseQuery(
+    queryOptions({
+      queryKey: ["invoice", "trust", trust.code],
+      queryFn: () => getInvoicesForParty({ data: { party } }),
+    }),
+  ).data;
 
   const submit = useServerFn(submitSpendCommitment);
   const m = useMutation({
