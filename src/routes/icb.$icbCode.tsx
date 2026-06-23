@@ -6,8 +6,10 @@ import { AppShell, ledgerModeQuery } from "@/components/AppShell";
 import { ICBS, TRUSTS, gbp, partyIcb } from "@/lib/nhs/data";
 import {
   countersignCommitment,
+  countersignInvoiceFn,
   getAllocationsForParty,
   getCommitmentsForParty,
+  getInvoicesForParty,
 } from "@/lib/nhs/canton.functions";
 
 export const Route = createFileRoute("/icb/$icbCode")({
