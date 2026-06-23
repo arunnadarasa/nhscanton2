@@ -396,7 +396,7 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     for (const a of allocs) {
       if (!a.partyId) continue;
       if (!readSet.has(a.partyId)) missingReadAs.push(a.hint);
-      if (a.hint !== "Auditor" && !actSet.has(a.partyId)) {
+      if (!actSet.has(a.partyId)) {
         missingActAs.push(a.hint);
       }
     }
