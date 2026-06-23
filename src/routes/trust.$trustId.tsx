@@ -332,7 +332,11 @@ function TrustPage() {
                   <button
                     onClick={() =>
                       settleM.mutate({
-                        data: { contractId: c.contractId, trustCode: trust.code },
+                        data: {
+                          contractId: c.contractId,
+                          trustCode: trust.code,
+                          supplierParty: c.payload.supplierName ?? "",
+                        },
                       })
                     }
                     disabled={
