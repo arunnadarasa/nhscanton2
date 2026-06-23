@@ -237,15 +237,15 @@ export async function usdcxBalance(party: Party): Promise<number> {
 
 export async function settleWithUsdcx(
   commitment: Contract<SpendCommitment>,
-  opts: { supplierName: Party; holdingCid?: string },
+  opts: { supplierParty: Party; holdingCid?: string },
 ): Promise<{ reconciled: Contract<ReconciledSpend>; settlementTxId: string }> {
   if (isLive()) {
     if (!opts.holdingCid) {
       throw new Error("liveSettle requires a USDCx Holding contractId");
     }
-    return liveSettle(commitment, opts.holdingCid, opts.supplierName);
+    return liveSettle(commitment, opts.holdingCid, opts.supplierParty);
   }
-  return memUsdcxSettle(commitment, opts.supplierName);
+  return memUsdcxSettle(commitment, opts.supplierParty);
 }
 
 // --- Explorer (demo only — bypasses privacy, used on /ledger) --------------
