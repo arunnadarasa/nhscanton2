@@ -64,14 +64,19 @@ function v2TemplateId(t: TemplateName): string {
 }
 
 function usdcxTemplateId(): string {
-  const pkg = cantonEnv("USDCX_PACKAGE_ID");
-  const tpl = cantonEnv("USDCX_TEMPLATE") ?? "Usdcx:Holding";
-  if (!pkg) throw new Error("CANTON_USDCX_PACKAGE_ID not set");
+  // Default to the Daml-LF package-name reference for our mock-usdcx DAR.
+  // JSON Ledger API v2 resolves `#<package-name>` to the latest uploaded
+  // version, so no explicit hash is required for the demo.
+  const pkg = cantonEnv("USDCX_PACKAGE_ID") ?? "#mock-usdcx";
+  const tpl = cantonEnv("USDCX_TEMPLATE") ?? "MockUsdcx:Holding";
   return `${pkg}:${tpl}`;
 }
 
 export function isUsdcxConfigured(): boolean {
-  return !!cantonEnv("USDCX_PACKAGE_ID");
+  // mock-usdcx ships in our self-deployed DAR set, so USDCx is always
+  // available once self-deploy has run. Operators can still override with
+  // CANTON_USDCX_PACKAGE_ID / CANTON_USDCX_TEMPLATE for real xReserve.
+  return true;
 }
 
 type SubmitAndWaitResponse = {
