@@ -72,8 +72,8 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     }
   }
 
-  let darInfo: { skipped?: true; bytes?: number; status?: number } = { skipped: true };
-  if (mode === "localnet") {
+  let darInfo: { skipped?: true; bytes?: number; status?: number; body?: string } = { skipped: true };
+  {
     const darUrl = new URL(DAR_ASSET_PATH, opts.baseUrl).toString();
     const darRes = await fetch(darUrl);
     if (!darRes.ok) {
@@ -95,7 +95,7 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
         { status: 502 },
       );
     }
-    darInfo = { bytes: darBytes.byteLength, status: uploadRes.status };
+    darInfo = { bytes: darBytes.byteLength, status: uploadRes.status, body: uploadText.slice(0, 300) };
   }
 
   let synchronizerId: string | undefined;
