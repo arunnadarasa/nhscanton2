@@ -149,6 +149,17 @@ Paused, not deleted. `scripts/deploy-canton-fly.sh`, `docs/canton-deploy/03-fly-
 6. **Derive the ledger `userId` from the runtime token** on any network you don't control end-to-end. Hardcoding it works on Fly because you own the IdP; on Devnet it returns an opaque 403.
 7. **Pin Canton image + DAR versions in the same release.** Today they're loosely coupled; an image change with a stale DAR would be a quiet failure.
 8. **Add an automated post-deploy smoke test.** One curl that mints a runtime token, fetches `/v2/state/ledger-end`, and confirms 200. Exit non-zero in CI on failure.
+9. **Don't model free-text fields as `Optional Party`.** Anything a user types into a textbox ("AstraZeneca", "Encode Hackathon") must be `Optional Text`. A `Party` is a real ledger participant; sending unknown text fails with `UNKNOWN_INFORMEES` at command submission. If a field needs both a human label *and* an on-chain identity (e.g. a supplier you'll later pay in USDCx), model them as two fields: `supplierName : Optional Text` + `supplierParty : Optional Party`.
+
+## Schema migrations on a live Devnet ledger
+
+Renaming or retyping a field on an installed template is **not** a backward-compatible upgrade in Canton's package-version checks — it's a remove + add, and re-uploading the DAR at a bumped patch version (`1.0.0` → `1.0.1`) under the same package name fails with `KNOWN_PACKAGE_VERSION`.
+
+The pragmatic workaround for a hackathon demo: bump the **package name** (`nhs-budget-app` → `nhs-budget-app-v2`) in `daml.yaml`, rebuild, and update every `#nhs-budget` reference in TS (template-id helpers, `DAR_ASSET_PATH`). Canton treats it as a fresh package, old contracts under the old name remain queryable but inert, and the new templates are immediately usable.
+
+For production you'd write a proper upgrade DAR with `data-dependencies` on the old package and a migration choice. For a demo: rename, redeploy, move on.
+
+
 
 
 ## Quick-reference cheatsheet
