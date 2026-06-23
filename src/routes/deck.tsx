@@ -427,7 +427,43 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
     ),
   },
   {
+    id: "lessons",
+    render: () => (
+      <Slide
+        kicker="What we learned"
+        title="Three things we'd tell the next builder"
+        accent={<Sparkles className="h-10 w-10 text-primary/70" />}
+      >
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            {
+              t: "Free text is Optional Text, never Optional Party",
+              d: "A Party is a real ledger participant. Typing \"AstraZeneca\" into a supplier box throws UNKNOWN_INFORMEES at submit time. If a field needs a human label AND a future on-chain payee, model them as two fields (supplierName + supplierParty).",
+            },
+            {
+              t: "Two JWT subjects, two purposes",
+              d: "participant_admin only authorizes node ops — DAR upload, party alloc, user/rights mgmt. Ledger reads and command submission need a separate runtime user. On Devnet the validator enforces that the command userId matches the token's sub claim. Derive it; don't hardcode.",
+            },
+            {
+              t: "Schema migrations: rename the package, not the version",
+              d: "Renaming a Daml field isn't a backward-compatible upgrade. Re-uploading at a bumped patch fails with KNOWN_PACKAGE_VERSION. For a hackathon: bump the package name (nhs-budget-app → nhs-budget-app-v2), redeploy. Canton treats it as a fresh package.",
+            },
+          ].map((c) => (
+            <div
+              key={c.t}
+              className="rounded-2xl border border-border bg-card/40 p-5"
+            >
+              <div className="text-lg font-semibold text-primary">{c.t}</div>
+              <p className="mt-3 text-base text-muted-foreground">{c.d}</p>
+            </div>
+          ))}
+        </div>
+      </Slide>
+    ),
+  },
+  {
     id: "criteria",
+
     render: () => (
       <Slide
         kicker="Judging criteria recap"

@@ -64,8 +64,15 @@ Two endpoints, two different shapes:
 - POST /v2/commands/submit-and-wait-for-transaction — body MUST be wrapped: { commands: { commands, userId, commandId, actAs, readAs } }. Returns events[] with CreatedEvent.contractId. Use this whenever the app needs the new contract id back.
 A flat body on the for-transaction endpoint returns 400 "Missing required field at 'commands.commands'". The wrap is non-negotiable.
 
+## Daml field types
+Anything the user types into a free-text field MUST be modelled as Optional Text, never Optional Party. A Party is a real ledger participant; submitting an unknown party returns UNKNOWN_INFORMEES at command submission. If a field needs both a human label and an on-chain identity (e.g. a supplier that might later be paid in USDCx), model them as two fields: supplierName : Optional Text + supplierParty : Optional Party. The text label is the audit-trail record; the party is added only when an on-chain settlement is being prepared.
+
+## Schema migrations on a live ledger
+If you rename or retype a field on an installed template, re-uploading the DAR at a bumped patch (1.0.0 -> 1.0.1) under the same package name fails with KNOWN_PACKAGE_VERSION — Canton's upgrade check treats a field rename as a remove + add, which isn't backward-compatible. Workaround for a hackathon: bump the package name in daml.yaml (nhs-budget-app -> nhs-budget-app-v2), rebuild, and update every #nhs-budget reference in TS (template-id helpers in live.server.ts, DAR_ASSET_PATH in deploy-core.server.ts). Canton treats it as a fresh package; the new templates are immediately usable.
+
 ## Devnet-specific gotcha: userId MUST match the runtime token's sub claim
 On Devnet, the validator enforces that the userId field in every command submission matches the sub (or applicationId) claim of the bearer token. Hardcoding userId: "lovable-nhs-app" returns a 403 "security-sensitive" error with no detail. Decode the OIDC runtime token server-side, pull sub, and use that as both the command userId and the user you grant party rights to. The same id must flow through the bootstrap and the runtime — getRuntimeLedgerUserId() in tokens.server.ts is the canonical helper.
+
 
 ## Client-side gotcha: fully-qualified party ids in payloads
 Contract payloads carry "NHSEngland::1220abc…", not the logical name. Filtering with payload.allocator === "NHSEngland" silently returns empty. Match by prefix or via the bootstrap-persisted map:
@@ -88,6 +95,8 @@ Generate /docs/canton-deploy/ with copy-paste instructions for both paths:
 - Use /v2/commands/submit-and-wait-for-transaction (wrapped body) whenever the app needs the created contract id back.
 - Never filter contract payloads with payload.party === "LogicalName" — match by prefix.
 - On Devnet, always derive the command userId from the runtime token sub claim.
+- Never model a free-text field as Optional Party. Use Optional Text for human labels; add a separate Optional Party field only when an on-chain identity is required.
+
 
 When you're done, give me: (a) the secrets I still need to set for whichever network I want, (b) the exact deploy steps (paste secrets → flip header pill → click Deploy), (c) confirmation that /ledger shows real on-ledger contracts. Then publish.`;
 
