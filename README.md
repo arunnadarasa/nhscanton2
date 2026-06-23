@@ -50,7 +50,8 @@ The NHS Ledger enables transparent and auditable healthcare funding management o
 - NHS England distributes funding to Integrated Care Boards (ICBs) through `SubAllocate`
 - ICBs further allocate funding to NHS Trusts
 - NHS Trusts create `SpendCommitment` records for healthcare expenditure
-- ICB commissioners review and approve spending through `Countersign`
+- Trusts also raise `Invoice` records for supplier-facing spend (parallel flow)
+- ICB commissioners review and approve spending through `Countersign` / `CountersignInvoice`
 - Approved expenditure is recorded as `ReconciledSpend`
 - Auditors can observe reconciled spending for compliance and governance purposes
 
