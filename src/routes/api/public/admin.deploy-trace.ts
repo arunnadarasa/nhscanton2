@@ -23,7 +23,9 @@ async function timed<T>(name: string, fn: () => Promise<T>, steps: Step[]): Prom
 export const Route = createFileRoute("/api/public/admin/deploy-trace")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireDeployToken(request);
+        if (denied) return denied;
         const steps: Step[] = [];
         const mode = getCantonMode();
         const { ledgerApi, adminApi } = getCantonEndpoints();
