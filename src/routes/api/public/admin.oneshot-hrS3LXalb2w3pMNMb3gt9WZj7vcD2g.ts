@@ -53,7 +53,6 @@ export const Route = createFileRoute(
             trust, commissioner, auditor,
             invoiceRef: `SMOKE-INV-${ts}`,
             category: "Smoke Test", amountGbp: "9876.54", period: "2026-06",
-            supplier: "Lovable Smoke Co",
           });
           const invVisible = await c.queryInvoices(commissioner);
           const invFound = invVisible.find(
