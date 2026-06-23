@@ -1,6 +1,6 @@
 # Build with the Canton 3.x toolchain: `dpm build`
 # (The legacy `daml` Assistant is deprecated in 3.4 and removed in 3.5.)
-sdk-version: 3.5.0-snapshot.20260403.0
+sdk-version: 3.5.1
 name: nhs-budget
 source: .
 version: 0.1.0
