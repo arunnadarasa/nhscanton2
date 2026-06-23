@@ -5,7 +5,12 @@ import { getCantonEndpoints, getCantonMode } from "@/lib/canton/mode.server";
 import { ICBS, TRUSTS } from "@/lib/nhs/data";
 
 const DEFAULT_USER_ID = "lovable-nhs-app";
-const DAR_ASSET_PATH = "/dars/nhs-budget-app-v2-1.0.1.dar.bin";
+// Upload order matters: mock-usdcx is a data-dependency of nhs-budget-app-v2.
+const DAR_ASSET_PATHS = [
+  "/dars/mock-usdcx-1.0.0.dar.bin",
+  "/dars/nhs-budget-app-v2-1.0.2.dar.bin",
+];
+const DAR_ASSET_PATH = DAR_ASSET_PATHS[DAR_ASSET_PATHS.length - 1]!;
 
 function defaultParties() {
   return [
@@ -72,15 +77,16 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     }
   }
 
-  let darInfo: {
-    skipped?: true;
+  const darInfos: Array<{
+    path: string;
     bytes?: number;
     status?: number;
     body?: string;
     alreadyVetted?: true;
-  } = { skipped: true };
-  {
-    const darUrl = new URL(DAR_ASSET_PATH, opts.baseUrl).toString();
+  }> = [];
+  let darInfo: (typeof darInfos)[number] = { path: DAR_ASSET_PATH, status: 0 };
+  for (const assetPath of DAR_ASSET_PATHS) {
+    const darUrl = new URL(assetPath, opts.baseUrl).toString();
     const darRes = await fetch(darUrl);
     if (!darRes.ok) {
       return Response.json(
@@ -107,22 +113,26 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
         {
           mode,
           step: "upload-dar",
+          dar: assetPath,
           status: uploadRes.status,
           body: uploadText.slice(0, 500),
           hint: versionClash
-            ? "Ledger already has a *different* nhs-budget DAR at this version. Bump version in daml/daml.yaml, rebuild, and redeploy."
+            ? "Ledger already has a *different* DAR at this name+version. Bump version in daml.yaml, rebuild, and redeploy."
             : undefined,
         },
         { status: 502 },
       );
     }
-    darInfo = {
+    darInfos.push({
+      path: assetPath,
       bytes: darBytes.byteLength,
       status: uploadRes.status,
       body: uploadText.slice(0, 300),
-      ...(exactDup ? { alreadyVetted: true } : {}),
-    };
+      ...(exactDup ? { alreadyVetted: true as const } : {}),
+    });
   }
+  darInfo = darInfos[darInfos.length - 1]!;
+
 
   let synchronizerId: string | undefined;
   let synchronizerInfo: unknown = "skipped";
@@ -424,6 +434,7 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     synchronizerId,
     synchronizerInfo,
     dar: darInfo,
+    dars: darInfos,
     parties: allocs,
     user: {
       id: userId,
