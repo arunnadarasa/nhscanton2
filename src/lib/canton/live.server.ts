@@ -267,10 +267,10 @@ export async function liveUsdcxBalance(party: Party): Promise<number> {
 export async function liveSettle(
   commitment: Contract<SpendCommitment>,
   holdingCid: string,
-  supplierName: Party,
+  supplierParty: Party,
 ): Promise<{ reconciled: Contract<ReconciledSpend>; settlementTxId: string }> {
   if (!isUsdcxConfigured()) throw new Error("USDCx not configured on this participant");
-  const supplierId = await resolveParty(supplier);
+  const supplierId = await resolveParty(supplierParty);
   const res = await submitAndWait(commitment.payload.commissioner, [
     {
       ExerciseCommand: {
@@ -286,14 +286,14 @@ export async function liveSettle(
   if (!created) throw new Error("liveSettle: no CreatedEvent for ReconciledSpend");
   const payload = (created.createArgument as ReconciledSpend) ?? {
     ...commitment.payload,
-    supplier,
+    supplierName: commitment.payload.supplierName ?? supplierId,
     settlementTxId: offset,
   };
   return {
     reconciled: {
       contractId: created.contractId,
       templateId: "Nhs:ReconciledSpend",
-      payload: { ...payload, supplier, settlementTxId: offset },
+      payload: { ...payload, settlementTxId: offset },
       signatories: created.signatories,
       observers: created.observers,
       createdAt: created.createdAt ?? new Date().toISOString(),
