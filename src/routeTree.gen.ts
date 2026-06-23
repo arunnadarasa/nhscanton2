@@ -26,6 +26,7 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicAdminSmokeInvoiceRouteImport } from './routes/api/public/admin.smoke-invoice'
 import { Route as ApiPublicAdminSelfDiagnoseRouteImport } from './routes/api/public/admin.self-diagnose'
 import { Route as ApiPublicAdminSelfDeployRouteImport } from './routes/api/public/admin.self-deploy'
+import { Route as ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRouteImport } from './routes/api/public/admin.oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
 import { Route as ApiPublicAdminListPartiesProbeRouteImport } from './routes/api/public/admin.list-parties-probe'
 import { Route as ApiPublicAdminDiagnoseRouteImport } from './routes/api/public/admin.diagnose'
 import { Route as ApiPublicAdminDeployTraceRouteImport } from './routes/api/public/admin.deploy-trace'
@@ -119,6 +120,12 @@ const ApiPublicAdminSelfDeployRoute =
     path: '/api/public/admin/self-deploy',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute =
+  ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRouteImport.update({
+    id: '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g',
+    path: '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminListPartiesProbeRoute =
   ApiPublicAdminListPartiesProbeRouteImport.update({
     id: '/api/public/admin/list-parties-probe',
@@ -161,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/api/public/admin/deploy-trace': typeof ApiPublicAdminDeployTraceRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
   '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
+  '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g': typeof ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
   '/api/public/admin/smoke-invoice': typeof ApiPublicAdminSmokeInvoiceRoute
@@ -184,6 +192,7 @@ export interface FileRoutesByTo {
   '/api/public/admin/deploy-trace': typeof ApiPublicAdminDeployTraceRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
   '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
+  '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g': typeof ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
   '/api/public/admin/smoke-invoice': typeof ApiPublicAdminSmokeInvoiceRoute
@@ -208,6 +217,7 @@ export interface FileRoutesById {
   '/api/public/admin/deploy-trace': typeof ApiPublicAdminDeployTraceRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
   '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
+  '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g': typeof ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
   '/api/public/admin/smoke-invoice': typeof ApiPublicAdminSmokeInvoiceRoute
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/deploy-trace'
     | '/api/public/admin/diagnose'
     | '/api/public/admin/list-parties-probe'
+    | '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
     | '/api/public/admin/smoke-invoice'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/deploy-trace'
     | '/api/public/admin/diagnose'
     | '/api/public/admin/list-parties-probe'
+    | '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
     | '/api/public/admin/smoke-invoice'
@@ -279,6 +291,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/deploy-trace'
     | '/api/public/admin/diagnose'
     | '/api/public/admin/list-parties-probe'
+    | '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
     | '/api/public/admin/smoke-invoice'
@@ -303,6 +316,7 @@ export interface RootRouteChildren {
   ApiPublicAdminDeployTraceRoute: typeof ApiPublicAdminDeployTraceRoute
   ApiPublicAdminDiagnoseRoute: typeof ApiPublicAdminDiagnoseRoute
   ApiPublicAdminListPartiesProbeRoute: typeof ApiPublicAdminListPartiesProbeRoute
+  ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute: typeof ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute
   ApiPublicAdminSelfDeployRoute: typeof ApiPublicAdminSelfDeployRoute
   ApiPublicAdminSelfDiagnoseRoute: typeof ApiPublicAdminSelfDiagnoseRoute
   ApiPublicAdminSmokeInvoiceRoute: typeof ApiPublicAdminSmokeInvoiceRoute
@@ -429,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAdminSelfDeployRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g': {
+      id: '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
+      path: '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
+      fullPath: '/api/public/admin/oneshot-hrS3LXalb2w3pMNMb3gt9WZj7vcD2g'
+      preLoaderRoute: typeof ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin/list-parties-probe': {
       id: '/api/public/admin/list-parties-probe'
       path: '/api/public/admin/list-parties-probe'
@@ -479,6 +500,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAdminDeployTraceRoute: ApiPublicAdminDeployTraceRoute,
   ApiPublicAdminDiagnoseRoute: ApiPublicAdminDiagnoseRoute,
   ApiPublicAdminListPartiesProbeRoute: ApiPublicAdminListPartiesProbeRoute,
+  ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute:
+    ApiPublicAdminOneshotHrS3LXalb2w3pMNMb3gt9WZj7vcD2gRoute,
   ApiPublicAdminSelfDeployRoute: ApiPublicAdminSelfDeployRoute,
   ApiPublicAdminSelfDiagnoseRoute: ApiPublicAdminSelfDiagnoseRoute,
   ApiPublicAdminSmokeInvoiceRoute: ApiPublicAdminSmokeInvoiceRoute,
