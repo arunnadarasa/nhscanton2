@@ -286,6 +286,10 @@ function TrustPage() {
                 supplier <em>and</em> creates <code>Nhs:ReconciledSpend</code>. Either both
                 legs commit or both revert.
               </p>
+              <p className="mt-2 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                Demo only — uses <code>mock-usdcx</code>, not the real Circle USDC.x
+                (xReserve). Same DvP flow; swap the package id to go live.
+              </p>
             </div>
             <span
               className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${usdcxTone}`}
