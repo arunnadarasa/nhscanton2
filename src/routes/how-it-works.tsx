@@ -95,6 +95,8 @@ Generate /docs/canton-deploy/ with copy-paste instructions for both paths:
 - Use /v2/commands/submit-and-wait-for-transaction (wrapped body) whenever the app needs the created contract id back.
 - Never filter contract payloads with payload.party === "LogicalName" — match by prefix.
 - On Devnet, always derive the command userId from the runtime token sub claim.
+- Never model a free-text field as Optional Party. Use Optional Text for human labels; add a separate Optional Party field only when an on-chain identity is required.
+
 
 When you're done, give me: (a) the secrets I still need to set for whichever network I want, (b) the exact deploy steps (paste secrets → flip header pill → click Deploy), (c) confirmation that /ledger shows real on-ledger contracts. Then publish.`;
 
