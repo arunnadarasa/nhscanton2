@@ -286,10 +286,11 @@ export async function allContractsForExplorer() {
         safeLiveQuery(() => liveQuery<BudgetAllocation>("Nhs:BudgetAllocation", p), `BudgetAllocation@${p}`),
         safeLiveQuery(() => liveQuery<SpendCommitment>("Nhs:SpendCommitment", p), `SpendCommitment@${p}`),
         safeLiveQuery(() => liveQuery<ReconciledSpend>("Nhs:ReconciledSpend", p), `ReconciledSpend@${p}`),
+        safeLiveQuery(() => liveQuery<Invoice>("Nhs:Invoice", p), `Invoice@${p}`),
       ]),
     );
     const seen = new Set<string>();
-    const merged: Contract<BudgetAllocation | SpendCommitment | ReconciledSpend>[] = [];
+    const merged: Contract<BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice>[] = [];
     for (const list of results) {
       for (const c of list) {
         if (seen.has(c.contractId)) continue;
