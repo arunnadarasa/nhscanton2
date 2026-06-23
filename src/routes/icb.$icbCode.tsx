@@ -69,12 +69,25 @@ function IcbPage() {
       queryFn: () => getCommitmentsForParty({ data: { party } }),
     }),
   ).data;
+  const invoices = useSuspenseQuery(
+    queryOptions({
+      queryKey: ["invoice", "icb", icb.code],
+      queryFn: () => getInvoicesForParty({ data: { party } }),
+    }),
+  ).data;
 
   const sign = useServerFn(countersignCommitment);
   const m = useMutation({
     mutationFn: sign,
     onSuccess: () =>
       qc.invalidateQueries({ predicate: (q) => ["commit", "recon", "canton"].includes(q.queryKey[0] as string) }),
+  });
+
+  const signInv = useServerFn(countersignInvoiceFn);
+  const invM = useMutation({
+    mutationFn: signInv,
+    onSuccess: () =>
+      qc.invalidateQueries({ predicate: (q) => ["invoice", "recon", "canton"].includes(q.queryKey[0] as string) }),
   });
 
   const totalIn = allocations
