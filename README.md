@@ -24,11 +24,14 @@ DHSC ──BudgetAllocation──▶ NHS England
                               │                                                           Auditor observer)
 ```
 
-Optional **Supplier Settlement** leg: a `SpendCommitment` with a `supplier`
-party can be atomically settled via the `SettleAndCountersign` choice, which
-transfers wrapped-USDC (USDCx, xReserve programme on Canton DevNet) to the
-supplier *and* archives into `ReconciledSpend` in a single transaction. True
-DvP — both legs commit or both revert. Visit `/trust/<code>` to try it; see
+Optional **Supplier Settlement** leg: `SpendCommitment` and `Invoice` carry
+`supplierName : Optional Text` as the human-readable payee label (kept on
+the audit trail). When USDCx settlement is wired in, the `SettleAndCountersign`
+choice takes a separate `supplierParty : Party` argument and atomically
+transfers wrapped-USDC (USDCx, xReserve programme on Canton DevNet) to that
+party *while* archiving into `ReconciledSpend` in a single transaction —
+true DvP, both legs commit or both revert. The on-chain payee stays
+distinct from the free-text label. Visit `/trust/<code>` to try it; see
 `docs/canton-deploy/06-usdcx.md` for going live on DevNet.
 
 Each arrow is a Daml contract on a Canton participant. Canton enforces that:
