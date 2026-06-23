@@ -26,8 +26,8 @@ export interface SpendCommitment {
   category: string;
   amountGbp: Decimal;
   period: string;
-  // Optional supplier — when set, this commitment is settleable via USDCx.
-  supplier?: Party | null;
+  // Free-text supplier label (audit trail only). Not a ledger party.
+  supplierName?: string | null;
   // Optional payment amount in USDCx units. Defaults to amountGbp 1:1 in the demo.
   paymentAmount?: Decimal | null;
 }
@@ -39,7 +39,7 @@ export interface ReconciledSpend {
   category: string;
   amountGbp: Decimal;
   period: string;
-  supplier?: Party | null;
+  supplierName?: string | null;
   // Transaction id / completion offset from the USDCx transfer leg, when settled.
   settlementTxId?: string | null;
 }
@@ -52,7 +52,7 @@ export interface Invoice {
   category: string;
   amountGbp: Decimal;
   period: string;
-  supplier?: Party | null;
+  supplierName?: string | null;
 }
 
 export interface Contract<P = unknown> {
