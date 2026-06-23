@@ -407,12 +407,15 @@ function TrustPage() {
           </Row>
           <Row>
             <label className="text-xs">
-              Supplier party <span className="text-muted-foreground">(optional)</span>
+            <label className="text-xs">
+              Supplier name <span className="text-muted-foreground">(optional)</span>
             </label>
             <input
               value={invSupplier}
               onChange={(e) => setInvSupplier(e.target.value)}
-              placeholder="e.g. Supplier::AcmePharma"
+              placeholder="e.g. AcmePharma"
+              className="input"
+            />
               className="input"
             />
           </Row>
