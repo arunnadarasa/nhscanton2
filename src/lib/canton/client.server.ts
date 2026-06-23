@@ -127,6 +127,7 @@ export async function countersign(
       commitment.contractId,
       "Countersign",
       {},
+      commitment.payload.commissioner,
     );
     return {
       contractId: cid,
