@@ -13,9 +13,14 @@ export const Route = createFileRoute("/api/public/admin/self-deploy")({
           return Response.json({ error: "DEPLOY_ADMIN_TOKEN not set" }, { status: 500 });
         }
         const url = new URL("/api/public/admin/deploy", request.url).toString();
+        const cookie = request.headers.get("cookie") ?? "";
         const res = await fetch(url, {
           method: "POST",
-          headers: { "x-deploy-token": token, "Content-Type": "application/json" },
+          headers: {
+            "x-deploy-token": token,
+            "Content-Type": "application/json",
+            ...(cookie ? { cookie } : {}),
+          },
           body: "{}",
         });
         const text = await res.text();
