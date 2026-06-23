@@ -96,6 +96,7 @@ Generate /docs/canton-deploy/ with copy-paste instructions for both paths:
 - Never filter contract payloads with payload.party === "LogicalName" — match by prefix.
 - On Devnet, always derive the command userId from the runtime token sub claim.
 - Never model a free-text field as Optional Party. Use Optional Text for human labels; add a separate Optional Party field only when an on-chain identity is required.
+- Grant the runtime user CanActAs on EVERY allocated party — including issuer-only parties like Auditor. If the app ever submits a CreateCommand whose actAs set contains a party the runtime user only has CanReadAs on, Canton returns an opaque 403 "security-sensitive error" with no hint. Don't add an "Auditor is read-only" exception to the rights loop.
 
 
 When you're done, give me: (a) the secrets I still need to set for whichever network I want, (b) the exact deploy steps (paste secrets → flip header pill → click Deploy), (c) confirmation that /ledger shows real on-ledger contracts. Then publish.`;

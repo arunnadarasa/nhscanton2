@@ -1,28 +1,40 @@
 ## Goal
-Allocate the new DARs (`mock-usdcx-1.0.0`, `nhs-budget-app-v2-1.0.2`) on the Seaport-managed devnet validator and mint demo USDCx balances for every Trust party.
 
-## Approach
-Devnet is already fully wired (`CANTON_DEVNET_*` secrets exist). The mode selector resolves the active network from the `canton_network` cookie before falling back to `CANTON_MODE`, so we can target devnet by sending `Cookie: canton_network=seaport` on the admin curls — no new secrets, no redeploy.
+Capture what we learned this turn (devnet self-deploy + mock-USDCx mint, Auditor actAs grant) in the four "story" surfaces, matching the prior style of each.
 
-## Steps (executed from the sandbox)
+## What's new to document
 
-1. `POST https://nhscanton2.lovable.app/api/public/admin/self-deploy`
-   - Headers: `x-deploy-token: $DEPLOY_ADMIN_TOKEN`, `Cookie: canton_network=seaport`, `content-type: application/json`
-   - Body: `{}`
-   - Expected: DARs uploaded (409 treated as success), parties allocated, runtime user + rights created. Capture the response body verbatim.
+1. **`CanActAs` must include the Auditor.** The runtime ledger user was previously granted `CanReadAs` for every party but only `CanActAs` for non-Auditor parties. Mock-USDCx mint submits as the issuer (Auditor) — Canton returned `403 "A security-sensitive error has been received"`. Fix: grant `CanActAs` to Auditor too in `deploy-core.server.ts`, then re-run `self-deploy`.
+2. **`#mock-usdcx` package-name reference works on JSON Ledger v2** — no need to pin the package hash; the participant resolves `#<name>:Module:Template` to the latest uploaded DAR.
+3. **End-to-end devnet bring-up works via cookie override** — `Cookie: canton_network=seaport` on the two admin endpoints switches a single request to devnet without flipping `CANTON_MODE` globally.
+4. **Live USDCx state on devnet** — 7 Trusts now hold 200,000,000.00 mock-USDCx each, issued by Auditor, on the Five North devnet validator.
 
-2. If step 1 succeeds, `POST https://nhscanton2.lovable.app/api/public/admin/mint-mock-usdcx`
-   - Same headers.
-   - Body: `{}` (defaults to 200,000,000.00 USDCx per Trust)
-   - Expected: one `MockUsdcx:Holding` contract minted per Trust party, returned with `contractId` and `issuer`.
+## Files to update
 
-3. Report the per-step JSON results back, including any per-Trust failures.
+### 1. `docs/canton-deploy/LEARNINGS.md`
+Add a new dated entry covering:
+- The 403 symptom + root cause (missing `CanActAs` for Auditor).
+- Why the Auditor exception originally existed (Auditor is normally a read-only observer) and why it has to be lifted for mock-USDCx (Auditor is the issuer/signatory on `MockUsdcx:Holding`).
+- The `#mock-usdcx` package-name resolution note.
+- The cookie-based per-request network override pattern.
 
-## Failure handling
-- If `self-deploy` returns `missing-config`, the devnet secrets aren't being picked up — surface the raw error and stop.
-- If `mint-mock-usdcx` returns `CANTON_USDCX_PACKAGE_ID not set`, request adding that secret with the package id printed by `self-deploy` (or by `/v2/packages`) before retrying.
-- All non-2xx responses are returned verbatim; no swallowing.
+### 2. `src/routes/how-it-works.tsx` — `MegaPromptSection`
+Append a bullet (matching the existing voice) noting that the runtime user must hold `CanActAs` rights on every signatory party it submits for — including issuer-only parties like Auditor — or `submit-and-wait` fails with an opaque 403.
+
+### 3. `src/routes/deck.tsx`
+Update whichever slide tracks "live state" / "what's on ledger" to reflect: mock-USDCx live on devnet, 7 Trusts funded at 200M USDCx each, issuer = Auditor. If there's a "lessons learned" or "what we shipped" slide, add a one-liner about the Auditor-actAs fix.
+
+### 4. `README.md`
+Under the deployment / status section, add a short note that devnet is live with mock-USDCx minted to all Trusts, and that the self-deploy route now grants `CanActAs` to all allocated parties (Auditor included).
 
 ## Out of scope
-- Setting `CANTON_MODE=devnet` globally (not needed; cookie override is sufficient and reversible).
-- Any DAML/code changes — the DARs are already live at `/dars/`.
+
+- No DAML or contract changes.
+- No new admin endpoints.
+- No changes to `CANTON_MODE` default — devnet stays opt-in via cookie.
+- No re-mint (already done; balances are live).
+
+## Verification
+
+- `tsgo` typecheck after edits.
+- Visual check that `/how-it-works` and `/deck` render the new copy without layout regressions.
