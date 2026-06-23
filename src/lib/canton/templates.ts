@@ -28,7 +28,8 @@ export interface TemplateDef {
 export type TemplateId =
   | "Nhs:BudgetAllocation"
   | "Nhs:SpendCommitment"
-  | "Nhs:ReconciledSpend";
+  | "Nhs:ReconciledSpend"
+  | "Nhs:Invoice";
 
 export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   "Nhs:BudgetAllocation": {
