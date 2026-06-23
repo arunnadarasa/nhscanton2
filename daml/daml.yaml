@@ -3,16 +3,22 @@
 sdk-version: 3.5.1
 name: nhs-budget-app-v2
 source: .
-version: 1.0.1
+version: 1.0.2
 dependencies:
   - daml-prim
   - daml-stdlib
 # USDCx (wrapped USDC) — DevNet xReserve programme.
-# Drop the published DAR into ./deps and uncomment the data-dependency below,
-# then uncomment the SettleAndCountersign choice in Nhs.daml.
-# Source: https://github.com/digital-asset/xreserve-deposits
-# data-dependencies:
-#   - deps/usdcx-1.0.0.dar
+# We ship a self-contained mock-usdcx package alongside this one so the
+# atomic SettleAndCountersign flow works on any Canton participant
+# (including the Seaport hackathon validator, where real xReserve is NOT
+# deployed). Build mock-usdcx first:
+#     cd daml/mock-usdcx && dpm build
+# Then keep the data-dependency below uncommented. To swap in REAL xReserve
+# USDCx on Canton DevNet, replace the path with the published DAR from
+# https://github.com/digital-asset/xreserve-deposits/releases and update
+# the import in Nhs.daml from `MockUsdcx` to `Usdcx`.
+data-dependencies:
+  - mock-usdcx/.daml/dist/mock-usdcx-1.0.0.dar
 parties:
   - DHSC
   - NHSEngland

@@ -252,6 +252,14 @@ export async function liveQuery<P>(
 
 // --- USDCx (DevNet) --------------------------------------------------------
 
+function usdcxIssuer(): Party {
+  return (
+    cantonEnv("USDCX_ISSUER") ??
+    process.env.CANTON_PARTY_AUDITOR ??
+    "Auditor"
+  );
+}
+
 export async function liveUsdcxBalance(party: Party): Promise<number> {
   if (!isUsdcxConfigured()) return 0;
   const resolved = await resolveParty(party);
@@ -263,6 +271,42 @@ export async function liveUsdcxBalance(party: Party): Promise<number> {
     return sum + (Number.isFinite(n) ? n : 0);
   }, 0);
 }
+
+/**
+ * Mint a mock-USDCx Holding for `owner`. Submitted as the configured
+ * issuer (defaults to the Auditor party). Only works against the
+ * mock-usdcx package — real xReserve USDCx is faucet-issued.
+ */
+export async function liveMintMockUsdcx(
+  owner: Party,
+  amount: number | string,
+): Promise<{ contractId: string; amount: string; owner: string; issuer: string }> {
+  if (!isUsdcxConfigured()) throw new Error("CANTON_USDCX_PACKAGE_ID not set");
+  const issuer = usdcxIssuer();
+  const issuerResolved = await resolveParty(issuer);
+  const ownerResolved = await resolveParty(owner);
+  const amt = typeof amount === "string" ? amount : amount.toFixed(2);
+  const res = await submitAndWait(issuer, [
+    {
+      CreateCommand: {
+        templateId: usdcxTemplateId(),
+        createArguments: {
+          issuer: issuerResolved,
+          owner: ownerResolved,
+          amount: amt,
+        },
+      },
+    },
+  ]);
+  const ev = firstCreated(res);
+  return {
+    contractId: ev.contractId,
+    amount: amt,
+    owner: ownerResolved,
+    issuer: issuerResolved,
+  };
+}
+
 
 export async function liveSettle(
   commitment: Contract<SpendCommitment>,
