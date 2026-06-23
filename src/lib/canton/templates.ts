@@ -77,6 +77,22 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
       { name: "settlementTxId", kind: "text", required: false, optional: true },
     ],
   },
+  "Nhs:Invoice": {
+    id: "Nhs:Invoice",
+    label: "Invoice",
+    module: "Nhs",
+    defaultActAs: "Trust-GSTT",
+    fields: [
+      { name: "trust", kind: "party", required: true },
+      { name: "commissioner", kind: "party", required: true },
+      { name: "auditor", kind: "party", required: true },
+      { name: "invoiceRef", kind: "text", required: true, placeholder: "INV-2026-04-001" },
+      { name: "category", kind: "text", required: true, placeholder: "acute" },
+      { name: "amountGbp", kind: "numeric", required: true, placeholder: "42500.00" },
+      { name: "period", kind: "text", required: true, placeholder: "2026-04" },
+      { name: "supplier", kind: "party", required: false, optional: true },
+    ],
+  },
 };
 
 export const TEMPLATE_LIST: TemplateDef[] = Object.values(TEMPLATES);
