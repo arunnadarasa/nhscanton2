@@ -431,10 +431,10 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
     render: () => (
       <Slide
         kicker="What we learned"
-        title="Three things we'd tell the next builder"
+        title="Four things we'd tell the next builder"
         accent={<Sparkles className="h-10 w-10 text-primary/70" />}
       >
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[
             {
               t: "Free text is Optional Text, never Optional Party",
@@ -447,6 +447,10 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
             {
               t: "Schema migrations: rename the package, not the version",
               d: "Renaming a Daml field isn't a backward-compatible upgrade. Re-uploading at a bumped patch fails with KNOWN_PACKAGE_VERSION. For a hackathon: bump the package name (nhs-budget-app → nhs-budget-app-v2), redeploy. Canton treats it as a fresh package.",
+            },
+            {
+              t: "Grant CanActAs on EVERY allocated party — Auditor included",
+              d: "Mock-USDCx mints as Auditor (the issuer). Our bootstrap originally granted Auditor only CanReadAs because it's a pure observer on the NHS templates. Every mint returned an opaque 403 \"security-sensitive error\" until we lifted the exception. Rule: if any template ever submits commands actAs a party, that party needs CanActAs.",
             },
           ].map((c) => (
             <div
