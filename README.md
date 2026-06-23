@@ -297,6 +297,19 @@ Hard-won from getting NHS Ledger live on Canton:
   `KNOWN_PACKAGE_VERSION`. Bump the package *name* in `daml.yaml`
   (e.g. `nhs-budget-app` → `nhs-budget-app-v2`), rebuild, and update
   every `#nhs-budget` reference in TypeScript.
+- **Grant `CanActAs` on every allocated party — Auditor included.** The
+  bootstrap route used to grant Auditor only `CanReadAs` because Auditor is
+  a pure observer on the NHS templates. The moment we added mock-USDCx
+  (where Auditor is the issuer/signatory), every mint returned an opaque
+  `403 "security-sensitive error"` with no party id in the body. The rule:
+  if any template the runtime user ever submits commands for has a party in
+  its `actAs` set, that party needs `CanActAs` — no exceptions. The
+  self-deploy route now grants `CanActAs` to every allocated party.
+- **Per-request network override via cookie.** The mode selector reads the
+  `canton_network` cookie before falling back to `CANTON_MODE`, so a single
+  `curl` can target Devnet (`-H "Cookie: canton_network=seaport"`) without
+  flipping production. Use this for one-off admin endpoints
+  (`self-deploy`, `mint-mock-usdcx`) instead of toggling env vars globally.
 
 
 ## Sources
