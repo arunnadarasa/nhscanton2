@@ -167,7 +167,44 @@ function IcbPage() {
         </div>
       </section>
 
+      <section className="mt-8 min-w-0 rounded-2xl border border-border bg-card p-5 md:p-6">
+        <h2 className="text-lg font-semibold">Inbound invoices</h2>
+        <p className="text-xs text-muted-foreground">
+          Supplier invoices issued by trusts you commission. Countersigning creates
+          a co-signed <code>Nhs:ReconciledSpend</code> visible to the auditor.
+        </p>
+        <ul className="mt-3 divide-y divide-border text-sm">
+          {invoices.length === 0 && (
+            <li className="py-4 text-muted-foreground">No invoices awaiting countersign.</li>
+          )}
+          {invoices.map((c) => (
+            <li key={c.contractId} className="flex items-start justify-between gap-3 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">
+                  {c.payload.invoiceRef} · <span className="text-muted-foreground">{c.payload.category}</span>
+                </div>
+                <div className="break-all font-mono text-[11px] leading-snug text-muted-foreground">
+                  {c.payload.trust} · {c.payload.period}
+                  {c.payload.supplier && <> · → {c.payload.supplier}</>}
+                </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="font-semibold">{gbp(c.payload.amountGbp)}</div>
+                <button
+                  disabled={invM.isPending}
+                  onClick={() => invM.mutate({ data: { contractId: c.contractId, icbCode: icb.code } })}
+                  className="mt-1 rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  Countersign
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
     </AppShell>
+
   );
 }
 
