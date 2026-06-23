@@ -169,3 +169,48 @@ export const settleSupplierPayment = createServerFn({ method: "POST" })
       holdingCid: data.holdingCid,
     });
   });
+
+// --- Invoice ---------------------------------------------------------------
+
+export const getInvoicesForParty = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ party: z.string().min(1).max(200) }))
+  .handler(async ({ data }) => {
+    const { queryInvoices } = await canton();
+    return queryInvoices(data.party);
+  });
+
+export const submitInvoice = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      trustCode: z.string().min(1).max(10),
+      icbCode: z.string().min(1).max(10),
+      invoiceRef: z.string().min(1).max(60),
+      category: z.string().min(1).max(60),
+      amountGbp: z.string().min(1),
+      period: z.string().min(1).max(20),
+      supplier: z.string().min(1).max(120).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { createInvoice } = await canton();
+    return createInvoice({
+      trust: partyTrust(data.trustCode),
+      commissioner: partyIcb(data.icbCode),
+      auditor: partyAuditor(),
+      invoiceRef: data.invoiceRef,
+      category: data.category,
+      amountGbp: data.amountGbp,
+      period: data.period,
+      supplier: data.supplier ?? null,
+    });
+  });
+
+export const countersignInvoiceFn = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ contractId: z.string().min(1), icbCode: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const { queryInvoices, countersignInvoice } = await canton();
+    const all = await queryInvoices(partyIcb(data.icbCode));
+    const inv = all.find((x) => x.contractId === data.contractId);
+    if (!inv) throw new Error("Invoice not visible to this commissioner");
+    return countersignInvoice(inv);
+  });
