@@ -112,7 +112,7 @@ export const submitSpendCommitment = createServerFn({ method: "POST" })
       category: z.string().min(1).max(60),
       amountGbp: z.string().min(1),
       period: z.string().min(1).max(20),
-      supplier: z.string().min(1).max(120).optional(),
+      supplierName: z.string().min(1).max(120).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -124,8 +124,8 @@ export const submitSpendCommitment = createServerFn({ method: "POST" })
       category: data.category,
       amountGbp: data.amountGbp,
       period: data.period,
-      supplier: data.supplier ?? null,
-      paymentAmount: data.supplier ? data.amountGbp : null,
+      supplierName: data.supplierName ?? null,
+      paymentAmount: data.supplierName ? data.amountGbp : null,
     });
   });
 
@@ -154,6 +154,7 @@ export const settleSupplierPayment = createServerFn({ method: "POST" })
     z.object({
       contractId: z.string().min(1),
       trustCode: z.string().min(1).max(10),
+      supplierParty: z.string().min(1).max(200),
       holdingCid: z.string().min(1).max(200).optional(),
     }),
   )
@@ -163,12 +164,12 @@ export const settleSupplierPayment = createServerFn({ method: "POST" })
     const visible = await querySpendCommitments(trust);
     const c = visible.find((x) => x.contractId === data.contractId);
     if (!c) throw new Error("Commitment not visible to this trust");
-    if (!c.payload.supplier) throw new Error("Commitment has no supplier — not settleable");
     return settleWithUsdcx(c, {
-      supplier: c.payload.supplier,
+      supplierParty: data.supplierParty,
       holdingCid: data.holdingCid,
     });
   });
+
 
 // --- Invoice ---------------------------------------------------------------
 
@@ -188,7 +189,7 @@ export const submitInvoice = createServerFn({ method: "POST" })
       category: z.string().min(1).max(60),
       amountGbp: z.string().min(1),
       period: z.string().min(1).max(20),
-      supplier: z.string().min(1).max(120).optional(),
+      supplierName: z.string().min(1).max(120).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -201,7 +202,7 @@ export const submitInvoice = createServerFn({ method: "POST" })
       category: data.category,
       amountGbp: data.amountGbp,
       period: data.period,
-      supplier: data.supplier ?? null,
+      supplierName: data.supplierName ?? null,
     });
   });
 

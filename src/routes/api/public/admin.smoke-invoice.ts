@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/public/admin/smoke-invoice")({
           const inv = await c.createInvoice({
             trust, commissioner, auditor, invoiceRef,
             category: "Smoke Test", amountGbp: "9876.54", period: "2026-06",
-            supplier: "Lovable Smoke Co",
+            supplierName: "Lovable Smoke Co",
           });
           const invVisible = await c.queryInvoices(commissioner);
           const invFound = invVisible.find(

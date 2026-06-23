@@ -39,12 +39,11 @@ template SpendCommitment
     category      : Text      -- Staff / Drugs / Estates / Other
     amountGbp     : Decimal
     period        : Text
-    supplier      : Optional Party    -- when set, this is a settleable supplier invoice
+    supplierName  : Optional Text     -- free-text supplier label (audit only)
     paymentAmount : Optional Decimal  -- USDCx units; defaults to amountGbp 1:1
   where
     signatory trust
     observer  commissioner
-    observer  (optional [] (\p -> [p]) supplier)
 
     -- Pure accounting countersignature (no money movement).
     choice Countersign : ContractId ReconciledSpend
@@ -57,21 +56,8 @@ template SpendCommitment
           category       = category
           amountGbp      = amountGbp
           period         = period
-          supplier       = supplier
+          supplierName   = supplierName
           settlementTxId = None
-
-    -- FUTURE: Atomic settlement against USDCx (DevNet xReserve programme).
-    -- See docs/canton-deploy/06-usdcx.md. Requires the Usdcx DAR as a
-    -- data-dependency in daml.yaml. Sketch:
-    --
-    --   choice SettleAndCountersign : ContractId ReconciledSpend
-    --     with holdingCid : ContractId Usdcx.Holding; supplierParty : Party
-    --     controller commissioner
-    --     do
-    --       _ <- exercise holdingCid Usdcx.Transfer with
-    --              newOwner = supplierParty
-    --              amount   = optional amountGbp identity paymentAmount
-    --       create ReconciledSpend with supplier = Some supplierParty; ...
 
 template ReconciledSpend
   with
@@ -81,12 +67,11 @@ template ReconciledSpend
     category       : Text
     amountGbp      : Decimal
     period         : Text
-    supplier       : Optional Party
+    supplierName   : Optional Text
     settlementTxId : Optional Text
   where
     signatory trust, commissioner
     observer  auditor
-    observer  (optional [] (\p -> [p]) supplier)
 
 -- Supplier invoice issued by a Trust to its commissioning ICB. Parallel to
 -- SpendCommitment in the workflow: Trust -> ICB -> Countersign -> ReconciledSpend.
@@ -99,11 +84,10 @@ template Invoice
     category     : Text
     amountGbp    : Decimal
     period       : Text
-    supplier     : Optional Party
+    supplierName : Optional Text
   where
     signatory trust
     observer  commissioner
-    observer  (optional [] (\p -> [p]) supplier)
 
     choice CountersignInvoice : ContractId ReconciledSpend
       controller commissioner
@@ -115,5 +99,5 @@ template Invoice
           category       = category
           amountGbp      = amountGbp
           period         = period
-          supplier       = supplier
+          supplierName   = supplierName
           settlementTxId = None

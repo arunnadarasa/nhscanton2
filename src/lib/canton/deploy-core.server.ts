@@ -5,7 +5,7 @@ import { getCantonEndpoints, getCantonMode } from "@/lib/canton/mode.server";
 import { ICBS, TRUSTS } from "@/lib/nhs/data";
 
 const DEFAULT_USER_ID = "lovable-nhs-app";
-const DAR_ASSET_PATH = "/dars/nhs-budget-app-1.0.0.dar.bin";
+const DAR_ASSET_PATH = "/dars/nhs-budget-app-v2-1.0.1.dar.bin";
 
 function defaultParties() {
   return [

@@ -87,7 +87,7 @@ export function memUsdcxBalance(party: Party): number {
 
 export function memUsdcxSettle(
   commitment: Contract<SpendCommitment>,
-  supplier: Party,
+  supplierParty: Party,
 ): { reconciled: Contract<ReconciledSpend>; settlementTxId: string } {
   const trust = commitment.payload.trust;
   const amount = parseFloat(
@@ -100,7 +100,7 @@ export function memUsdcxSettle(
     );
   }
   usdcx.set(trust, bal - amount);
-  usdcx.set(supplier, (usdcx.get(supplier) ?? 0) + amount);
+  usdcx.set(supplierParty, (usdcx.get(supplierParty) ?? 0) + amount);
 
   const reconciled = memCreate<ReconciledSpend>(
     "Nhs:ReconciledSpend",
@@ -111,11 +111,11 @@ export function memUsdcxSettle(
       category: commitment.payload.category,
       amountGbp: commitment.payload.amountGbp,
       period: commitment.payload.period,
-      supplier,
+      supplierName: commitment.payload.supplierName ?? supplierParty,
       settlementTxId: `sim-tx-${Date.now().toString(36)}`,
     },
     [commitment.payload.trust, commitment.payload.commissioner],
-    [commitment.payload.auditor, supplier],
+    [commitment.payload.auditor, supplierParty],
   );
   memArchive(commitment.contractId);
   return {

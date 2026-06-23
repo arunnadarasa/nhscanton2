@@ -114,7 +114,6 @@ export async function createSpendCommitment(
   payload: SpendCommitment,
 ): Promise<Contract<SpendCommitment>> {
   const observers = [payload.commissioner];
-  if (payload.supplier) observers.push(payload.supplier);
   if (isLive()) return liveCreate("Nhs:SpendCommitment", payload, payload.trust);
   return memCreate("Nhs:SpendCommitment", payload, [payload.trust], observers);
 }
@@ -169,7 +168,6 @@ export async function queryReconciledSpend(party: Party): Promise<Contract<Recon
 
 export async function createInvoice(payload: Invoice): Promise<Contract<Invoice>> {
   const observers = [payload.commissioner];
-  if (payload.supplier) observers.push(payload.supplier);
   if (isLive()) return liveCreate("Nhs:Invoice", payload, payload.trust);
   return memCreate("Nhs:Invoice", payload, [payload.trust], observers);
 }
@@ -203,7 +201,7 @@ export async function countersignInvoice(
         category: invoice.payload.category,
         amountGbp: invoice.payload.amountGbp,
         period: invoice.payload.period,
-        supplier: invoice.payload.supplier ?? null,
+        supplierName: invoice.payload.supplierName ?? null,
         settlementTxId: null,
       },
       signatories: [invoice.payload.trust, invoice.payload.commissioner],
@@ -220,7 +218,7 @@ export async function countersignInvoice(
       category: invoice.payload.category,
       amountGbp: invoice.payload.amountGbp,
       period: invoice.payload.period,
-      supplier: invoice.payload.supplier ?? null,
+      supplierName: invoice.payload.supplierName ?? null,
       settlementTxId: null,
     } satisfies ReconciledSpend,
     [invoice.payload.trust, invoice.payload.commissioner],
@@ -239,15 +237,15 @@ export async function usdcxBalance(party: Party): Promise<number> {
 
 export async function settleWithUsdcx(
   commitment: Contract<SpendCommitment>,
-  opts: { supplier: Party; holdingCid?: string },
+  opts: { supplierParty: Party; holdingCid?: string },
 ): Promise<{ reconciled: Contract<ReconciledSpend>; settlementTxId: string }> {
   if (isLive()) {
     if (!opts.holdingCid) {
       throw new Error("liveSettle requires a USDCx Holding contractId");
     }
-    return liveSettle(commitment, opts.holdingCid, opts.supplier);
+    return liveSettle(commitment, opts.holdingCid, opts.supplierParty);
   }
-  return memUsdcxSettle(commitment, opts.supplier);
+  return memUsdcxSettle(commitment, opts.supplierParty);
 }
 
 // --- Explorer (demo only — bypasses privacy, used on /ledger) --------------

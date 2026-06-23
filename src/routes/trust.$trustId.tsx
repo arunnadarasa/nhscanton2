@@ -161,7 +161,7 @@ function TrustPage() {
   const committed = commitments.reduce((s, a) => s + parseFloat(a.payload.amountGbp), 0);
   const reconciledTotal = reconciled.reduce((s, a) => s + parseFloat(a.payload.amountGbp), 0);
 
-  const settleable = commitments.filter((c) => c.payload.supplier);
+  const settleable = commitments.filter((c) => c.payload.supplierName);
 
   const usdcxLabel =
     mode.usdcx === "configured"
@@ -224,12 +224,12 @@ function TrustPage() {
             </Row>
             <Row>
               <label className="text-xs">
-                Supplier party <span className="text-muted-foreground">(optional — enables USDCx settlement)</span>
+                Supplier name <span className="text-muted-foreground">(optional)</span>
               </label>
               <input
                 value={supplier}
                 onChange={(e) => setSupplier(e.target.value)}
-                placeholder="e.g. Supplier::AcmePharma"
+                placeholder="e.g. AcmePharma"
                 className="input"
               />
             </Row>
@@ -242,7 +242,7 @@ function TrustPage() {
                     category,
                     amountGbp: amount,
                     period,
-                    supplier: supplier.trim() ? supplier.trim() : undefined,
+                    supplierName: supplier.trim() ? supplier.trim() : undefined,
                   },
                 })
               }
@@ -267,7 +267,7 @@ function TrustPage() {
                   <div className="font-medium">{c.payload.category}</div>
                   <div className="truncate text-xs text-muted-foreground">
                     {c.payload.period}
-                    {c.payload.supplier && <> · → {c.payload.supplier}</>}
+                    {c.payload.supplierName && <> · → {c.payload.supplierName}</>}
                   </div>
                 </div>
                 <div className="font-mono text-sm font-semibold">{gbp(c.payload.amountGbp)}</div>
@@ -322,7 +322,7 @@ function TrustPage() {
                 <div className="min-w-0">
                   <div className="font-medium">{c.payload.category}</div>
                   <div className="truncate text-xs text-muted-foreground">
-                    → {c.payload.supplier} · {c.payload.period}
+                    → {c.payload.supplierName} · {c.payload.period}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -332,7 +332,11 @@ function TrustPage() {
                   <button
                     onClick={() =>
                       settleM.mutate({
-                        data: { contractId: c.contractId, trustCode: trust.code },
+                        data: {
+                          contractId: c.contractId,
+                          trustCode: trust.code,
+                          supplierParty: c.payload.supplierName ?? "",
+                        },
                       })
                     }
                     disabled={
@@ -403,12 +407,12 @@ function TrustPage() {
           </Row>
           <Row>
             <label className="text-xs">
-              Supplier party <span className="text-muted-foreground">(optional)</span>
+              Supplier name <span className="text-muted-foreground">(optional)</span>
             </label>
             <input
               value={invSupplier}
               onChange={(e) => setInvSupplier(e.target.value)}
-              placeholder="e.g. Supplier::AcmePharma"
+              placeholder="e.g. AcmePharma"
               className="input"
             />
           </Row>
@@ -423,7 +427,7 @@ function TrustPage() {
                 category: invCategory,
                 amountGbp: invAmount,
                 period: invPeriod,
-                supplier: invSupplier.trim() ? invSupplier.trim() : undefined,
+                supplierName: invSupplier.trim() ? invSupplier.trim() : undefined,
               },
             })
           }
@@ -450,7 +454,7 @@ function TrustPage() {
                 </div>
                 <div className="truncate text-xs text-muted-foreground">
                   {c.payload.period}
-                  {c.payload.supplier && <> · → {c.payload.supplier}</>}
+                  {c.payload.supplierName && <> · → {c.payload.supplierName}</>}
                 </div>
               </div>
               <div className="font-mono text-sm font-semibold">{gbp(c.payload.amountGbp)}</div>
@@ -477,7 +481,7 @@ function TrustPage() {
                 <div className="font-medium">{r.payload.category}</div>
                 <div className="truncate text-xs text-muted-foreground">
                   {r.payload.period}
-                  {r.payload.supplier && <> · settled → {r.payload.supplier}</>}
+                  {r.payload.supplierName && <> · settled → {r.payload.supplierName}</>}
                   {r.payload.settlementTxId && (
                     <> · <span className="font-mono">{r.payload.settlementTxId}</span></>
                   )}
