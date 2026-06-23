@@ -154,6 +154,7 @@ export const settleSupplierPayment = createServerFn({ method: "POST" })
     z.object({
       contractId: z.string().min(1),
       trustCode: z.string().min(1).max(10),
+      supplierParty: z.string().min(1).max(200),
       holdingCid: z.string().min(1).max(200).optional(),
     }),
   )
@@ -163,12 +164,12 @@ export const settleSupplierPayment = createServerFn({ method: "POST" })
     const visible = await querySpendCommitments(trust);
     const c = visible.find((x) => x.contractId === data.contractId);
     if (!c) throw new Error("Commitment not visible to this trust");
-    if (!c.payload.supplierName) throw new Error("Commitment has no supplier — not settleable");
     return settleWithUsdcx(c, {
-      supplierName: c.payload.supplierName,
+      supplierParty: data.supplierParty,
       holdingCid: data.holdingCid,
     });
   });
+
 
 // --- Invoice ---------------------------------------------------------------
 
