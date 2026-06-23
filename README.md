@@ -195,7 +195,6 @@ Represents a spending commitment made by an NHS Trust before approval and reconc
 ### Visibility
 - Trust
 - Commissioner (ICB)
-- Optional Supplier
 
 ### Data Model
 
@@ -207,7 +206,7 @@ Represents a spending commitment made by an NHS Trust before approval and reconc
 | category | Text | Spending category |
 | amountGbp | Decimal | Amount committed (£) |
 | period | Text | Reporting period |
-| supplier | Optional Party | Supplier associated with expenditure |
+| supplierName | Optional Text | Supplier label (human-readable; not an on-chain party) |
 | paymentAmount | Optional Decimal | Settlement amount |
 
 ### Choice: Countersign
