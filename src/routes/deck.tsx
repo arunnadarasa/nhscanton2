@@ -406,7 +406,7 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
       >
         <div className="grid grid-cols-4 gap-4">
           {[
-            { q: "Now", t: "Live on Seaport-managed Canton Devnet (Encode access) + SIMULATED fallback" },
+            { q: "Now", t: "Live on Seaport-managed Canton Devnet — 7 NHS Trusts funded with 200M mock-USDCx each, ready for DvP settlement" },
             { q: "Q3", t: "NHSE pilot — 1 ICB, 3 Trusts, read-only NAO observer party" },
             { q: "Q4", t: "3 ICBs live; resume self-hosted Fly path for sovereign deployments" },
             { q: "2026", t: "Payment rails, NHS Scotland/Wales, research grant budgets" },
