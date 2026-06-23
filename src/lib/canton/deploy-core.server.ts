@@ -321,9 +321,8 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
   for (const a of allocs) {
     if (!a.partyId) continue;
     rights.push({ kind: { CanReadAs: { value: { party: a.partyId } } } });
-    if (a.hint !== "Auditor") {
-      rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
-    }
+    // Auditor needs CanActAs too so it can mint mock-USDCx (issuer = Auditor).
+    rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
   }
 
   let rightsResult: unknown = "skipped";
@@ -397,7 +396,7 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     for (const a of allocs) {
       if (!a.partyId) continue;
       if (!readSet.has(a.partyId)) missingReadAs.push(a.hint);
-      if (a.hint !== "Auditor" && !actSet.has(a.partyId)) {
+      if (!actSet.has(a.partyId)) {
         missingActAs.push(a.hint);
       }
     }
