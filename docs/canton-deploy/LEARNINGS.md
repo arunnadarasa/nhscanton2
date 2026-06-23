@@ -229,3 +229,37 @@ runtime:{ sub: "lovable-nhs-app",     aud: "canton-ledger-api",                 
 flyctl scale count 1 -a "$APP_NAME" --yes
 flyctl machines list -a "$APP_NAME"      # confirm exactly 1
 ```
+
+---
+
+## Devnet bring-up: mock-USDCx mint (2026-06-23)
+
+After republishing the v1.0.2 NHS DAR + mock-usdcx-1.0.0 DAR, we re-ran `/api/public/admin/self-deploy` against Devnet (cookie override, no global mode flip) and then `/api/public/admin/mint-mock-usdcx` to fund all 7 NHS Trust parties with 200,000,000.00 mock-USDCx each. Three concrete lessons came out of it:
+
+### Lesson A — The runtime user needs `CanActAs` on the **Auditor** too
+
+**Symptom.** Every `mint-mock-usdcx` submission returned `403 "A security-sensitive error has been received"` from `/v2/commands/submit-and-wait-for-transaction`. No template id, no party id in the body — just a correlation id.
+
+**Root cause.** `deploy-core.server.ts` was granting `CanReadAs` for every allocated party but `CanActAs` only for non-Auditor parties — Auditor was treated as a read-only observer. That assumption is correct for `BudgetAllocation` / `SpendCommitment` / `ReconciledSpend`, where the Auditor is a pure observer. It is wrong for `MockUsdcx:Holding`, where `issuer` is a signatory and the demo uses Auditor as the issuer. Without `CanActAs(Auditor)`, the runtime user can't submit a `CreateCommand` whose `actAs` set contains Auditor — and Canton refuses to tell you why (security-sensitive errors are deliberately opaque).
+
+**Fix.** Drop the `if (a.hint !== "Auditor")` exception in the rights-grant loop and grant `CanActAs` to every allocated party. Re-run `self-deploy` to apply the new rights, then re-run `mint-mock-usdcx`. All 7 Trusts minted on the first retry.
+
+**Cost.** ~10 minutes once we read the response carefully. The trap is that the 403 looks identical to "your JWT is wrong" or "the package isn't uploaded".
+
+### Lesson B — `#mock-usdcx` package-name reference works on JSON Ledger v2
+
+JSON Ledger API v2 resolves `#<package-name>:Module:Template` to the latest uploaded version of that Daml-LF package. So `usdcxTemplateId()` can return `#mock-usdcx:MockUsdcx:Holding` and the participant picks the right package hash automatically. No need to pin a `CANTON_USDCX_PACKAGE_ID` secret for the demo DAR — that env is reserved for real xReserve USDCx (where you _do_ want to pin a specific hash).
+
+### Lesson C — Per-request network override via cookie
+
+Two admin endpoints, one published site, two networks: rather than flip `CANTON_MODE=devnet` globally (and risk every other request hitting Devnet), the mode selector reads the `canton_network` cookie before falling back to `CANTON_MODE`. So a single `curl` can target Devnet:
+
+```bash
+curl -X POST https://nhscanton2.lovable.app/api/public/admin/self-deploy \
+  -H "x-deploy-token: $DEPLOY_ADMIN_TOKEN" \
+  -H "Cookie: canton_network=seaport" \
+  -H "content-type: application/json" -d '{}'
+```
+
+This makes Devnet bring-up reversible and safe to run from a script without touching production secrets.
+
