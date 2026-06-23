@@ -60,7 +60,7 @@ function newCommandId() {
 }
 
 function v2TemplateId(t: TemplateName): string {
-  return `#nhs-budget:${t}`;
+  return `#nhs-budget-app:${t}`;
 }
 
 function usdcxTemplateId(): string {
