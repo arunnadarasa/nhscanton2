@@ -32,7 +32,7 @@ function disclosed(c: AnyContract, party: Party): boolean {
   return c.signatories.includes(party) || c.observers.includes(party);
 }
 
-export function memCreate<T extends BudgetAllocation | SpendCommitment | ReconciledSpend>(
+export function memCreate<T extends BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice>(
   templateId: TemplateName,
   payload: T,
   signatories: Party[],
