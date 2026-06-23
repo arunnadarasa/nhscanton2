@@ -1,40 +1,71 @@
-// Smoke test: end-to-end SpendCommitment → Countersign → ReconciledSpend on the live ledger.
-// (The deployed DAR exposes SpendCommitment/Countersign; Invoice is app-side only.)
+// Smoke test: end-to-end on the live ledger for BOTH workflows.
+//   1) SpendCommitment → Countersign → ReconciledSpend
+//   2) Invoice         → CountersignInvoice → ReconciledSpend
 import { createFileRoute } from "@tanstack/react-router";
 
-import type { SpendCommitment } from "@/lib/canton/types";
+import type { Invoice, SpendCommitment } from "@/lib/canton/types";
+import { requireDeployToken } from "@/lib/canton/admin-guard.server";
 
 export const Route = createFileRoute("/api/public/admin/smoke-invoice")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireDeployToken(request);
+        if (denied) return denied;
         try {
           const c = await import("@/lib/canton/client.server");
           const { partyTrust, partyIcb, partyAuditor } = await import("@/lib/nhs/data");
           const trustCode = "GSTT";
           const icbCode = "LDN";
           const ts = Date.now();
-          const category = `SMOKE-${ts}`;
-          const created = await c.createSpendCommitment({
-            trust: partyTrust(trustCode),
-            commissioner: partyIcb(icbCode),
-            auditor: partyAuditor(),
-            category,
-            amountGbp: "1234.56",
-            period: "2026-06",
+          const trust = partyTrust(trustCode);
+          const commissioner = partyIcb(icbCode);
+          const auditor = partyAuditor();
+
+          // --- SpendCommitment path -----------------------------------------
+          const category = `SMOKE-SC-${ts}`;
+          const sc = await c.createSpendCommitment({
+            trust, commissioner, auditor, category,
+            amountGbp: "1234.56", period: "2026-06",
           });
-          const visible = await c.querySpendCommitments(partyIcb(icbCode));
-          const found = visible.find(
-            (v: { contractId: string; payload: SpendCommitment }) => v.contractId === created.contractId,
+          const scVisible = await c.querySpendCommitments(commissioner);
+          const scFound = scVisible.find(
+            (v: { contractId: string; payload: SpendCommitment }) =>
+              v.contractId === sc.contractId,
           );
-          if (!found) {
+          if (!scFound) {
             return Response.json(
-              { ok: false, step: "query-as-icb", created, visibleCount: visible.length },
+              { ok: false, step: "query-sc-as-icb", sc, visibleCount: scVisible.length },
               { status: 500 },
             );
           }
-          const reconciled = await c.countersign(found);
-          return Response.json({ ok: true, category, commitment: created, reconciled });
+          const scReconciled = await c.countersign(scFound);
+
+          // --- Invoice path -------------------------------------------------
+          const invoiceRef = `SMOKE-INV-${ts}`;
+          const inv = await c.createInvoice({
+            trust, commissioner, auditor, invoiceRef,
+            category: "Smoke Test", amountGbp: "9876.54", period: "2026-06",
+            supplier: "Lovable Smoke Co",
+          });
+          const invVisible = await c.queryInvoices(commissioner);
+          const invFound = invVisible.find(
+            (v: { contractId: string; payload: Invoice }) =>
+              v.contractId === inv.contractId,
+          );
+          if (!invFound) {
+            return Response.json(
+              { ok: false, step: "query-invoice-as-icb", inv, visibleCount: invVisible.length },
+              { status: 500 },
+            );
+          }
+          const invReconciled = await c.countersignInvoice(invFound);
+
+          return Response.json({
+            ok: true,
+            spendCommitment: { category, commitment: sc, reconciled: scReconciled },
+            invoice: { invoiceRef, invoice: inv, reconciled: invReconciled },
+          });
         } catch (e) {
           return Response.json(
             {
