@@ -8,7 +8,8 @@ export type Decimal = string; // numeric string, e.g. "192300000000.00"
 export type TemplateName =
   | "Nhs:BudgetAllocation"
   | "Nhs:SpendCommitment"
-  | "Nhs:ReconciledSpend";
+  | "Nhs:ReconciledSpend"
+  | "Nhs:Invoice";
 
 export interface BudgetAllocation {
   allocator: Party;
