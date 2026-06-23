@@ -224,12 +224,12 @@ function TrustPage() {
             </Row>
             <Row>
               <label className="text-xs">
-                Supplier party <span className="text-muted-foreground">(optional — enables USDCx settlement)</span>
+                Supplier name <span className="text-muted-foreground">(optional)</span>
               </label>
               <input
                 value={supplier}
                 onChange={(e) => setSupplier(e.target.value)}
-                placeholder="e.g. Supplier::AcmePharma"
+                placeholder="e.g. AcmePharma"
                 className="input"
               />
             </Row>
