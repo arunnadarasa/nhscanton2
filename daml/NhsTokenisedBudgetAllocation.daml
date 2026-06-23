@@ -211,6 +211,39 @@ template ReconciledSpend
     observer (optional [] (\p -> [p]) supplier)
 
 -- ============================================================
+-- INVOICE (Trust -> ICB)
+-- ============================================================
+
+template Invoice
+  with
+    trust        : Party
+    commissioner : Party
+    auditor      : Party
+    invoiceRef   : Text
+    category     : Text
+    amountGbp    : Decimal
+    period       : Text
+    supplier     : Optional Party
+  where
+    signatory trust
+    observer commissioner
+    observer (optional [] (\p -> [p]) supplier)
+
+    choice CountersignInvoice : ContractId ReconciledSpend
+      controller commissioner
+      do
+        create ReconciledSpend with
+          trust          = trust
+          commissioner   = commissioner
+          auditor        = auditor
+          category       = category
+          amountGbp      = amountGbp
+          period         = period
+          supplier       = supplier
+          settlementTxId = None
+
+
+-- ============================================================
 -- PRIVACY SPEND COMMITMENT
 -- ============================================================
 

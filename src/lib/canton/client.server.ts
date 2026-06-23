@@ -22,6 +22,7 @@ import {
 import type {
   BudgetAllocation,
   Contract,
+  Invoice,
   LedgerMode,
   Party,
   ReconciledSpend,
@@ -162,6 +163,70 @@ export async function queryReconciledSpend(party: Party): Promise<Contract<Recon
   return memQuery<ReconciledSpend>("Nhs:ReconciledSpend", party);
 }
 
+// --- Invoice ---------------------------------------------------------------
+
+export async function createInvoice(payload: Invoice): Promise<Contract<Invoice>> {
+  const observers = [payload.commissioner];
+  if (payload.supplier) observers.push(payload.supplier);
+  if (isLive()) return liveCreate("Nhs:Invoice", payload, payload.trust);
+  return memCreate("Nhs:Invoice", payload, [payload.trust], observers);
+}
+
+export async function queryInvoices(party: Party): Promise<Contract<Invoice>[]> {
+  if (isLive()) {
+    try { return await liveQuery<Invoice>("Nhs:Invoice", party); }
+    catch (e) { console.warn("[canton] queryInvoices failed:", e); return []; }
+  }
+  return memQuery<Invoice>("Nhs:Invoice", party);
+}
+
+export async function countersignInvoice(
+  invoice: Contract<Invoice>,
+): Promise<Contract<ReconciledSpend>> {
+  if (isLive()) {
+    const cid = await liveExercise<string>(
+      "Nhs:Invoice",
+      invoice.contractId,
+      "CountersignInvoice",
+      {},
+    );
+    return {
+      contractId: cid,
+      templateId: "Nhs:ReconciledSpend",
+      payload: {
+        trust: invoice.payload.trust,
+        commissioner: invoice.payload.commissioner,
+        auditor: invoice.payload.auditor,
+        category: invoice.payload.category,
+        amountGbp: invoice.payload.amountGbp,
+        period: invoice.payload.period,
+        supplier: invoice.payload.supplier ?? null,
+        settlementTxId: null,
+      },
+      signatories: [invoice.payload.trust, invoice.payload.commissioner],
+      observers: [invoice.payload.auditor],
+      createdAt: new Date().toISOString(),
+    };
+  }
+  const reconciled = memCreate(
+    "Nhs:ReconciledSpend",
+    {
+      trust: invoice.payload.trust,
+      commissioner: invoice.payload.commissioner,
+      auditor: invoice.payload.auditor,
+      category: invoice.payload.category,
+      amountGbp: invoice.payload.amountGbp,
+      period: invoice.payload.period,
+      supplier: invoice.payload.supplier ?? null,
+      settlementTxId: null,
+    } satisfies ReconciledSpend,
+    [invoice.payload.trust, invoice.payload.commissioner],
+    [invoice.payload.auditor],
+  );
+  memArchive(invoice.contractId);
+  return reconciled;
+}
+
 // --- USDCx Settlement (DevNet) ---------------------------------------------
 
 export async function usdcxBalance(party: Party): Promise<number> {
@@ -221,10 +286,11 @@ export async function allContractsForExplorer() {
         safeLiveQuery(() => liveQuery<BudgetAllocation>("Nhs:BudgetAllocation", p), `BudgetAllocation@${p}`),
         safeLiveQuery(() => liveQuery<SpendCommitment>("Nhs:SpendCommitment", p), `SpendCommitment@${p}`),
         safeLiveQuery(() => liveQuery<ReconciledSpend>("Nhs:ReconciledSpend", p), `ReconciledSpend@${p}`),
+        safeLiveQuery(() => liveQuery<Invoice>("Nhs:Invoice", p), `Invoice@${p}`),
       ]),
     );
     const seen = new Set<string>();
-    const merged: Contract<BudgetAllocation | SpendCommitment | ReconciledSpend>[] = [];
+    const merged: Contract<BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice>[] = [];
     for (const list of results) {
       for (const c of list) {
         if (seen.has(c.contractId)) continue;

@@ -1,47 +1,59 @@
-# Update docs for Seaport Devnet + Encode Hackathon path
+# Add Invoice flow
 
-## Context
-We now have working Devnet access via the **Encode Hackathon** and a **Seaport-managed 5N Sandbox validator** (OIDC client_credentials auth). The self-hosted Fly.io path was working end-to-end but is **paused** — no longer the recommended default because Devnet is available and requires zero infra ops.
+The diagram shows a parallel `Invoice` child off `Trust::GSTT` that lands at `ICB::LDN`, then `Countersign` → `ReconciledSpend` (Trust + ICB signed, Auditor observer). Today the app only models `SpendCommitment`. This adds `Invoice` as a peer concept end-to-end, and exposes the relevant `NhsTokenisedBudgetAllocation` parameters as inputs.
 
-## Files to change
+## What gets built
 
-### 1. `docs/canton-deploy/LEARNINGS.md`
-- Add a new top-level section: **"Encode Hackathon → Seaport Devnet shortcut"**
-- Explain: Encode provided hackathon participants with pre-provisioned Seaport Devnet access (OIDC token endpoint, runtime + bootstrap client credentials, 5N Sandbox validator)
-- Note: Fly.io path is paused — it works, but not needed when Devnet is available
-- Capture the new learning: OIDC `client_credentials` flow vs RS256 self-minted JWTs; decoding runtime token `sub` to derive the Canton ledger user id (critical fix for 403 "security-sensitive" errors on Devnet)
-- Update the "What I'd do differently next time" list to mention trying Devnet first before self-hosting
+### 1. Daml — `daml/Nhs.daml`
+Add a new template (kept additive so existing flows still compile):
 
-### 2. `docs/canton-deploy/README.md`
-- Update the decision tree to prioritize Seaport Devnet at the top:
-  ```
-  Need a participant reachable from Lovable?
-  ├── Have Encode Hackathon / Seaport access? → Use Devnet (08-network-toggle.md, OIDC)
-  ├── Fastest persistent self-hosted?         → 07-sandbox-bootstrap.md (Fly.io, paused)
-  ...
-  ```
-- Add the Seaport/Devnet secrets to the secrets table:
-  `CANTON_DEVNET_OIDC_TOKEN_URL`, `CANTON_DEVNET_OIDC_AUDIENCE`, `CANTON_DEVNET_OIDC_RUNTIME_CLIENT_ID/SECRET`, `CANTON_DEVNET_OIDC_BOOTSTRAP_CLIENT_ID/SECRET`
-- Note Fly.io path as "working but paused"
+```text
+template Invoice
+  with
+    trust        : Party    -- issuer
+    commissioner : Party    -- ICB (observer)
+    auditor      : Party
+    invoiceRef   : Text     -- e.g. INV-2026-04-001
+    category     : Text
+    amountGbp    : Decimal
+    period       : Text
+    supplier     : Optional Party
+  where
+    signatory trust
+    observer  commissioner
+    observer  (optional [] (\p -> [p]) supplier)
 
-### 3. `src/routes/how-it-works.tsx`
-- Update **MEGA_PROMPT** (~80 lines at top of file):
-  - Replace Fly.io-centric wording with "Seaport Devnet via Encode Hackathon" as the primary path
-  - Keep Fly.io as an optional self-hosted fallback, marked "paused / advanced"
-  - Update secrets list to include OIDC devnet vars alongside legacy Fly vars
-  - Add a note about deriving the ledger user id from the OIDC token `sub` claim (the 403 fix)
-  - Keep the mode-flip logic (memory / localnet / devnet) and the 3-way toggle
-- Update the **page body**:
-  - Reorder the "Stack at a glance" card: Seaport Devnet first, Fly.io second (marked "paused")
-  - Update the "End-to-end in 5 steps" section to describe the Devnet path (get OIDC creds from Encode/Seaport → set secrets → toggle to Seaport → Deploy → done)
-  - Update "Taking it to MainNet" to mention that Devnet is the current staging ground
-  - Update links
+    choice CountersignInvoice : ContractId ReconciledSpend
+      controller commissioner
+      do create ReconciledSpend with
+           trust, commissioner, auditor, category, amountGbp, period,
+           supplier, settlementTxId = None
+```
 
-### 4. `docs/canton-deploy/08-network-toggle.md`
-- Minor refresh: clarify that `devnet` (Seaport) is the currently recommended network for hackathon participants
-- Add a note that `localnet` (Fly.io) is paused but the code remains functional
+Mirror the same template in `daml/NhsTokenisedBudgetAllocation.daml` for parity with the tokenised module.
 
-## Out of scope
-- No code logic changes (mode.server.ts, oidc-token.server.ts, etc. already work)
-- No deletion of Fly.io docs or scripts (just demote them in narrative)
-- No UI component changes beyond text/copy in how-it-works.tsx
+### 2. Ledger client — `src/lib/canton/`
+- `types.ts`: add `Invoice` payload type.
+- `client.server.ts`: add `createInvoice`, `queryInvoices`, `countersignInvoice` (live + memory paths, same shape as the SpendCommitment helpers).
+- `allContractsForExplorer`: include `Nhs:Invoice` in the per-party query fan-out so it appears on `/ledger` and `/audit`.
+
+### 3. Server functions — `src/lib/nhs/canton.functions.ts`
+Add:
+- `getInvoicesForParty({ party })`
+- `submitInvoice({ trustCode, icbCode, invoiceRef, category, amountGbp, period, supplier? })`
+- `countersignInvoice({ contractId, icbCode })`
+
+### 4. Generic Create-Contract UI — `src/lib/canton/templates.ts`
+Register `Nhs:Invoice` with fields: `trust`, `commissioner`, `auditor`, `invoiceRef`, `category`, `amountGbp`, `period`, optional `supplier`. This makes it submittable from `/contracts/new` with no extra UI work; `contracts.functions.ts` Zod schema is data-driven from `TEMPLATES`.
+
+### 5. Page wiring
+- `src/routes/trust.$trustId.tsx`: add an "Issue invoice" form and an "Invoices" list (mirrors the existing SpendCommitment block; uses `submitInvoice` + `getInvoicesForParty`).
+- `src/routes/icb.$icbCode.tsx`: add an "Inbound invoices" list with a `Countersign` action that calls `countersignInvoice` and invalidates the reconciled-spend query.
+- `/ledger` and `/audit` automatically pick up the new template via `allContractsForExplorer`.
+
+### 6. DAR redeploy
+After Daml changes, the user runs `POST /api/public/admin/deploy` with `x-deploy-token` to upload the rebuilt DAR. No infra/secret changes required.
+
+## Out of scope (call out)
+- No new tables, no auth changes, no edge functions.
+- Tokenised privacy templates (`SpendCommitmentPrivacy`, `ProofOf*`, etc.) stay Daml-only for now — happy to wire them next once the Invoice flow is in.

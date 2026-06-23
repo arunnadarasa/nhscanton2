@@ -5,13 +5,14 @@
 import type {
   BudgetAllocation,
   Contract,
+  Invoice,
   Party,
   ReconciledSpend,
   SpendCommitment,
   TemplateName,
 } from "./types";
 
-type AnyContract = Contract<BudgetAllocation | SpendCommitment | ReconciledSpend>;
+type AnyContract = Contract<BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice>;
 
 // Module-level singleton. Survives across server fn invocations within a
 // single Worker isolate — exactly the demo lifetime we need.
@@ -31,7 +32,7 @@ function disclosed(c: AnyContract, party: Party): boolean {
   return c.signatories.includes(party) || c.observers.includes(party);
 }
 
-export function memCreate<T extends BudgetAllocation | SpendCommitment | ReconciledSpend>(
+export function memCreate<T extends BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice>(
   templateId: TemplateName,
   payload: T,
   signatories: Party[],

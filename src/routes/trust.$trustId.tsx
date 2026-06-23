@@ -9,9 +9,11 @@ import { TRUSTS, gbp, partyTrust } from "@/lib/nhs/data";
 import {
   getAllocationsForParty,
   getCommitmentsForParty,
+  getInvoicesForParty,
   getReconciledForParty,
   getUsdcxBalance,
   settleSupplierPayment,
+  submitInvoice,
   submitSpendCommitment,
 } from "@/lib/nhs/canton.functions";
 
@@ -54,6 +56,12 @@ export const Route = createFileRoute("/trust/$trustId")({
         queryFn: () => getUsdcxBalance({ data: { party } }),
       }),
     );
+    context.queryClient.ensureQueryData(
+      queryOptions({
+        queryKey: ["invoice", "trust", trust.code],
+        queryFn: () => getInvoicesForParty({ data: { party } }),
+      }),
+    );
   },
   component: TrustPage,
   notFoundComponent: () => (
@@ -94,6 +102,12 @@ function TrustPage() {
       queryFn: () => getUsdcxBalance({ data: { party } }),
     }),
   ).data;
+  const invoices = useSuspenseQuery(
+    queryOptions({
+      queryKey: ["invoice", "trust", trust.code],
+      queryFn: () => getInvoicesForParty({ data: { party } }),
+    }),
+  ).data;
 
   const submit = useServerFn(submitSpendCommitment);
   const m = useMutation({
@@ -120,10 +134,28 @@ function TrustPage() {
     onError: (e) => toast.error("Settlement failed", { description: (e as Error).message }),
   });
 
+  const issueInvoiceFn = useServerFn(submitInvoice);
+  const invoiceM = useMutation({
+    mutationFn: issueInvoiceFn,
+    onSuccess: () => {
+      toast.success("Invoice issued to commissioner");
+      qc.invalidateQueries({
+        predicate: (q) => ["invoice", "canton"].includes(q.queryKey[0] as string),
+      });
+    },
+    onError: (e) => toast.error("Issue failed", { description: (e as Error).message }),
+  });
+
   const [category, setCategory] = useState("Staff");
   const [amount, setAmount] = useState("12000000");
   const [period, setPeriod] = useState("2024-Q4");
   const [supplier, setSupplier] = useState("");
+
+  const [invRef, setInvRef] = useState("INV-2026-04-001");
+  const [invCategory, setInvCategory] = useState("Drugs");
+  const [invAmount, setInvAmount] = useState("42500");
+  const [invPeriod, setInvPeriod] = useState("2026-04");
+  const [invSupplier, setInvSupplier] = useState("");
 
   const incoming = allocations.reduce((s, a) => s + parseFloat(a.payload.amountGbp), 0);
   const committed = commitments.reduce((s, a) => s + parseFloat(a.payload.amountGbp), 0);
@@ -340,6 +372,94 @@ function TrustPage() {
           )}
         </div>
       </section>
+
+      <section className="mt-8 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Issue supplier invoice</h2>
+        <p className="text-xs text-muted-foreground">
+          Creates <code>Nhs:Invoice</code> disclosed to ICB::{trust.icb}. Parallel to
+          spend commitments — also reaches <code>Nhs:ReconciledSpend</code> once the
+          commissioner countersigns.
+        </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <Row>
+            <label className="text-xs">Invoice ref</label>
+            <input value={invRef} onChange={(e) => setInvRef(e.target.value)} className="input" />
+          </Row>
+          <Row>
+            <label className="text-xs">Category</label>
+            <select value={invCategory} onChange={(e) => setInvCategory(e.target.value)} className="input">
+              {["Staff", "Drugs", "Estates", "Commissioned services", "Other"].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </Row>
+          <Row>
+            <label className="text-xs">Amount (GBP)</label>
+            <input value={invAmount} onChange={(e) => setInvAmount(e.target.value)} className="input" />
+          </Row>
+          <Row>
+            <label className="text-xs">Period</label>
+            <input value={invPeriod} onChange={(e) => setInvPeriod(e.target.value)} className="input" />
+          </Row>
+          <Row>
+            <label className="text-xs">
+              Supplier party <span className="text-muted-foreground">(optional)</span>
+            </label>
+            <input
+              value={invSupplier}
+              onChange={(e) => setInvSupplier(e.target.value)}
+              placeholder="e.g. Supplier::AcmePharma"
+              className="input"
+            />
+          </Row>
+        </div>
+        <button
+          onClick={() =>
+            invoiceM.mutate({
+              data: {
+                trustCode: trust.code,
+                icbCode: trust.icb,
+                invoiceRef: invRef,
+                category: invCategory,
+                amountGbp: invAmount,
+                period: invPeriod,
+                supplier: invSupplier.trim() ? invSupplier.trim() : undefined,
+              },
+            })
+          }
+          disabled={invoiceM.isPending}
+          className="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 md:w-auto"
+        >
+          {invoiceM.isPending ? "Issuing on Canton…" : "Issue invoice to commissioner"}
+        </button>
+        {invoiceM.isError && (
+          <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+            {(invoiceM.error as Error).message}
+          </div>
+        )}
+
+        <ul className="mt-5 divide-y divide-border text-sm">
+          {invoices.length === 0 && (
+            <li className="py-2 text-xs text-muted-foreground">No invoices yet.</li>
+          )}
+          {invoices.map((c) => (
+            <li key={c.contractId} className="flex items-center justify-between gap-3 py-2">
+              <div className="min-w-0">
+                <div className="font-medium">
+                  {c.payload.invoiceRef} · <span className="text-muted-foreground">{c.payload.category}</span>
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {c.payload.period}
+                  {c.payload.supplier && <> · → {c.payload.supplier}</>}
+                </div>
+              </div>
+              <div className="font-mono text-sm font-semibold">{gbp(c.payload.amountGbp)}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+
 
       <section className="mt-8 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">Reconciled spend ledger</h2>

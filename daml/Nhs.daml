@@ -87,3 +87,33 @@ template ReconciledSpend
     signatory trust, commissioner
     observer  auditor
     observer  (optional [] (\p -> [p]) supplier)
+
+-- Supplier invoice issued by a Trust to its commissioning ICB. Parallel to
+-- SpendCommitment in the workflow: Trust -> ICB -> Countersign -> ReconciledSpend.
+template Invoice
+  with
+    trust        : Party
+    commissioner : Party
+    auditor      : Party
+    invoiceRef   : Text
+    category     : Text
+    amountGbp    : Decimal
+    period       : Text
+    supplier     : Optional Party
+  where
+    signatory trust
+    observer  commissioner
+    observer  (optional [] (\p -> [p]) supplier)
+
+    choice CountersignInvoice : ContractId ReconciledSpend
+      controller commissioner
+      do
+        create ReconciledSpend with
+          trust          = trust
+          commissioner   = commissioner
+          auditor        = auditor
+          category       = category
+          amountGbp      = amountGbp
+          period         = period
+          supplier       = supplier
+          settlementTxId = None

@@ -8,7 +8,8 @@ export type Decimal = string; // numeric string, e.g. "192300000000.00"
 export type TemplateName =
   | "Nhs:BudgetAllocation"
   | "Nhs:SpendCommitment"
-  | "Nhs:ReconciledSpend";
+  | "Nhs:ReconciledSpend"
+  | "Nhs:Invoice";
 
 export interface BudgetAllocation {
   allocator: Party;
@@ -41,6 +42,17 @@ export interface ReconciledSpend {
   supplier?: Party | null;
   // Transaction id / completion offset from the USDCx transfer leg, when settled.
   settlementTxId?: string | null;
+}
+
+export interface Invoice {
+  trust: Party;
+  commissioner: Party;
+  auditor: Party;
+  invoiceRef: string;
+  category: string;
+  amountGbp: Decimal;
+  period: string;
+  supplier?: Party | null;
 }
 
 export interface Contract<P = unknown> {
