@@ -1,59 +1,34 @@
-# Add Invoice flow
+## Where we are
 
-The diagram shows a parallel `Invoice` child off `Trust::GSTT` that lands at `ICB::LDN`, then `Countersign` → `ReconciledSpend` (Trust + ICB signed, Auditor observer). Today the app only models `SpendCommitment`. This adds `Invoice` as a peer concept end-to-end, and exposes the relevant `NhsTokenisedBudgetAllocation` parameters as inputs.
+- Live ledger smoke test is green: `SpendCommitment → Countersign → ReconciledSpend` round-trips on Seaport devnet with the correct parties.
+- `Invoice` template is now in the deployed DAR (v0.1.1) and stays — both `SpendCommitment` and `Invoice` workflows are first-class.
+- `countersign` / `countersignInvoice` now correctly act as the commissioner.
+- One known wart: `self-deploy` returns 400 (`KNOWN_PACKAGE_VERSION`) on repeat runs because a previous v0.1.1 with a different hash is already vetted.
 
-## What gets built
+## Proposed next steps (in order)
 
-### 1. Daml — `daml/Nhs.daml`
-Add a new template (kept additive so existing flows still compile):
+### 1. Make `self-deploy` idempotent
+Treat `KNOWN_PACKAGE_VERSION` as success in `deploy-core.server.ts`, alongside the existing 409 dedupe. The package is already on-ledger, so this is a no-op, not a failure. Result: green `self-deploy` on every call.
 
-```text
-template Invoice
-  with
-    trust        : Party    -- issuer
-    commissioner : Party    -- ICB (observer)
-    auditor      : Party
-    invoiceRef   : Text     -- e.g. INV-2026-04-001
-    category     : Text
-    amountGbp    : Decimal
-    period       : Text
-    supplier     : Optional Party
-  where
-    signatory trust
-    observer  commissioner
-    observer  (optional [] (\p -> [p]) supplier)
+### 2. Live-mode smoke for the Invoice path
+Add `/api/public/admin/smoke-invoice-live` (or a query flag on the existing route) that exercises `createInvoice → CountersignInvoice → ReconciledSpend` end-to-end on the live ledger, mirroring the SpendCommitment smoke. Confirms the new Invoice template actually works on-chain.
 
-    choice CountersignInvoice : ContractId ReconciledSpend
-      controller commissioner
-      do create ReconciledSpend with
-           trust, commissioner, auditor, category, amountGbp, period,
-           supplier, settlementTxId = None
-```
+### 3. Audit other `liveExercise` call sites for the same actAs bug
+`liveExercise` silently defaults to `NHSEngland`. The countersign fix patched two call sites — sweep `client.server.ts` and `live.server.ts` for any other exercise that doesn't pass an explicit `actAs`, and either pass the right party or make `actAs` a required parameter so the bug can't recur.
 
-Mirror the same template in `daml/NhsTokenisedBudgetAllocation.daml` for parity with the tokenised module.
+### 4. Lock down the temp admin endpoints
+`/api/public/admin/self-deploy`, `/self-diagnose`, `/deploy-trace`, `/smoke-invoice` are unauthenticated on the published site. Add a shared-secret check (header `x-admin-token` compared against `process.env.ADMIN_DEPLOY_TOKEN`, timing-safe). Without this, anyone can trigger a DAR upload or ledger writes.
 
-### 2. Ledger client — `src/lib/canton/`
-- `types.ts`: add `Invoice` payload type.
-- `client.server.ts`: add `createInvoice`, `queryInvoices`, `countersignInvoice` (live + memory paths, same shape as the SpendCommitment helpers).
-- `allContractsForExplorer`: include `Nhs:Invoice` in the per-party query fan-out so it appears on `/ledger` and `/audit`.
+### 5. (Deferred) USDCx settlement
+`settleWithUsdcx` is still `"simulated"`. Real settlement needs the USDCx DAR as a data-dependency, the commented `SettleAndCountersign` choice enabled in `Nhs.daml`, a rebuild, and `CANTON_USDCX_PACKAGE_ID` set. Larger scope — flagging for later, not in this batch.
 
-### 3. Server functions — `src/lib/nhs/canton.functions.ts`
-Add:
-- `getInvoicesForParty({ party })`
-- `submitInvoice({ trustCode, icbCode, invoiceRef, category, amountGbp, period, supplier? })`
-- `countersignInvoice({ contractId, icbCode })`
+## What this plan delivers
 
-### 4. Generic Create-Contract UI — `src/lib/canton/templates.ts`
-Register `Nhs:Invoice` with fields: `trust`, `commissioner`, `auditor`, `invoiceRef`, `category`, `amountGbp`, `period`, optional `supplier`. This makes it submittable from `/contracts/new` with no extra UI work; `contracts.functions.ts` Zod schema is data-driven from `TEMPLATES`.
+After steps 1–4: a clean, repeatable deploy + smoke loop covering both `SpendCommitment` and `Invoice` paths on the live ledger, with no remaining silent-default bugs and the admin endpoints no longer open to the public internet.
 
-### 5. Page wiring
-- `src/routes/trust.$trustId.tsx`: add an "Issue invoice" form and an "Invoices" list (mirrors the existing SpendCommitment block; uses `submitInvoice` + `getInvoicesForParty`).
-- `src/routes/icb.$icbCode.tsx`: add an "Inbound invoices" list with a `Countersign` action that calls `countersignInvoice` and invalidates the reconciled-spend query.
-- `/ledger` and `/audit` automatically pick up the new template via `allContractsForExplorer`.
+## Technical notes
 
-### 6. DAR redeploy
-After Daml changes, the user runs `POST /api/public/admin/deploy` with `x-deploy-token` to upload the rebuilt DAR. No infra/secret changes required.
-
-## Out of scope (call out)
-- No new tables, no auth changes, no edge functions.
-- Tokenised privacy templates (`SpendCommitmentPrivacy`, `ProofOf*`, etc.) stay Daml-only for now — happy to wire them next once the Invoice flow is in.
+- Step 1: one extra status check in `deploy-core.server.ts` next to the existing 409 branch — match on response body containing `KNOWN_PACKAGE_VERSION`.
+- Step 2: new route `src/routes/api/public/admin.smoke-invoice-live.ts` modeled on the existing smoke test, calling `createInvoice` then `countersignInvoice`.
+- Step 3: tighten the signature of `liveExercise` to require `actAs: Party` and remove the `?? "NHSEngland"` fallback so TypeScript surfaces any remaining call site.
+- Step 4: add a `requireAdminToken(request)` helper used by all four admin routes; secret added via `add_secret` (`ADMIN_DEPLOY_TOKEN`).
