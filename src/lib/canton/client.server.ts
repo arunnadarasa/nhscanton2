@@ -22,6 +22,7 @@ import {
 import type {
   BudgetAllocation,
   Contract,
+  Invoice,
   LedgerMode,
   Party,
   ReconciledSpend,
