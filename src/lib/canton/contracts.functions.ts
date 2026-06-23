@@ -166,7 +166,7 @@ export const createContract = createServerFn({ method: "POST" })
         }
         const c = memCreate(
           data.templateId,
-          resolvedPayload as unknown as BudgetAllocation | SpendCommitment | ReconciledSpend,
+          resolvedPayload as unknown as BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice,
           sig,
           obs,
         );
