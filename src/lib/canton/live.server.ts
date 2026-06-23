@@ -286,7 +286,7 @@ export async function liveMintMockUsdcx(
   owner: Party,
   amount: number | string,
 ): Promise<{ contractId: string; amount: string; owner: string; issuer: string }> {
-  if (!isUsdcxConfigured()) throw new Error("CANTON_USDCX_PACKAGE_ID not set");
+  // isUsdcxConfigured() is always true now (mock-usdcx ships in our DAR set)
   const issuer = usdcxIssuer();
   const issuerResolved = await resolveParty(issuer);
   const ownerResolved = await resolveParty(owner);
