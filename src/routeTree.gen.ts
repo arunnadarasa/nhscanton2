@@ -23,6 +23,7 @@ import { Route as TrustTrustIdRouteImport } from './routes/trust.$trustId'
 import { Route as IcbIcbCodeRouteImport } from './routes/icb.$icbCode'
 import { Route as ContractsNewRouteImport } from './routes/contracts.new'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as ApiPublicAdminSelfDiagnoseRouteImport } from './routes/api/public/admin.self-diagnose'
 import { Route as ApiPublicAdminSelfDeployRouteImport } from './routes/api/public/admin.self-deploy'
 import { Route as ApiPublicAdminDiagnoseRouteImport } from './routes/api/public/admin.diagnose'
 import { Route as ApiPublicAdminDeployRouteImport } from './routes/api/public/admin.deploy'
@@ -97,6 +98,12 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   path: '/api/public/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminSelfDiagnoseRoute =
+  ApiPublicAdminSelfDiagnoseRouteImport.update({
+    id: '/api/public/admin/self-diagnose',
+    path: '/api/public/admin/self-diagnose',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminSelfDeployRoute =
   ApiPublicAdminSelfDeployRouteImport.update({
     id: '/api/public/admin/self-deploy',
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/api/public/admin/deploy': typeof ApiPublicAdminDeployRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
+  '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -151,6 +159,7 @@ export interface FileRoutesByTo {
   '/api/public/admin/deploy': typeof ApiPublicAdminDeployRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
+  '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -171,6 +180,7 @@ export interface FileRoutesById {
   '/api/public/admin/deploy': typeof ApiPublicAdminDeployRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
+  '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/deploy'
     | '/api/public/admin/diagnose'
     | '/api/public/admin/self-deploy'
+    | '/api/public/admin/self-diagnose'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/deploy'
     | '/api/public/admin/diagnose'
     | '/api/public/admin/self-deploy'
+    | '/api/public/admin/self-diagnose'
   id:
     | '__root__'
     | '/'
@@ -230,6 +242,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/deploy'
     | '/api/public/admin/diagnose'
     | '/api/public/admin/self-deploy'
+    | '/api/public/admin/self-diagnose'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,6 +263,7 @@ export interface RootRouteChildren {
   ApiPublicAdminDeployRoute: typeof ApiPublicAdminDeployRoute
   ApiPublicAdminDiagnoseRoute: typeof ApiPublicAdminDiagnoseRoute
   ApiPublicAdminSelfDeployRoute: typeof ApiPublicAdminSelfDeployRoute
+  ApiPublicAdminSelfDiagnoseRoute: typeof ApiPublicAdminSelfDiagnoseRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -352,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin/self-diagnose': {
+      id: '/api/public/admin/self-diagnose'
+      path: '/api/public/admin/self-diagnose'
+      fullPath: '/api/public/admin/self-diagnose'
+      preLoaderRoute: typeof ApiPublicAdminSelfDiagnoseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin/self-deploy': {
       id: '/api/public/admin/self-deploy'
       path: '/api/public/admin/self-deploy'
@@ -394,6 +415,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAdminDeployRoute: ApiPublicAdminDeployRoute,
   ApiPublicAdminDiagnoseRoute: ApiPublicAdminDiagnoseRoute,
   ApiPublicAdminSelfDeployRoute: ApiPublicAdminSelfDeployRoute,
+  ApiPublicAdminSelfDiagnoseRoute: ApiPublicAdminSelfDiagnoseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

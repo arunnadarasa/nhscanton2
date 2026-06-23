@@ -1,27 +1,26 @@
-// TEMP one-shot: triggers /api/public/admin/deploy using the server-side
-// DEPLOY_ADMIN_TOKEN so the operator does not need to paste it. Safe to
-// delete after the live ledger has been initialised.
+// GET /api/public/admin/self-diagnose
+// Same as /admin/diagnose but uses the server-side DEPLOY_ADMIN_TOKEN
+// so operators can hit it from the browser/CI without pasting the token.
+// Forwards the canton_network cookie so network selection works.
 
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/api/public/admin/self-deploy")({
+export const Route = createFileRoute("/api/public/admin/self-diagnose")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      GET: async ({ request }) => {
         const token = process.env.DEPLOY_ADMIN_TOKEN;
         if (!token) {
           return Response.json({ error: "DEPLOY_ADMIN_TOKEN not set" }, { status: 500 });
         }
-        const url = new URL("/api/public/admin/deploy", request.url).toString();
+        const url = new URL("/api/public/admin/diagnose", request.url).toString();
         const cookie = request.headers.get("cookie") ?? "";
         const res = await fetch(url, {
-          method: "POST",
+          method: "GET",
           headers: {
             "x-deploy-token": token,
-            "Content-Type": "application/json",
             ...(cookie ? { cookie } : {}),
           },
-          body: "{}",
         });
         const text = await res.text();
         return new Response(text, {
