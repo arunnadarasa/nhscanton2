@@ -1,0 +1,20 @@
+# Mock-USDCx — a self-contained stand-in for the DevNet xReserve USDCx
+# package. Same wire shape (Holding template with owner/amount + Transfer
+# choice) so the NHS app can run its atomic DvP flow on the Seaport
+# hackathon validator, where the real xReserve programme is NOT deployed.
+#
+# IMPORTANT: this is NOT a wrapped stablecoin. Holdings are minted by the
+# issuer party (the NHS Auditor) and have zero real-world value. Use this
+# only for demo / hackathon settlement plumbing.
+#
+# Build: `cd daml/mock-usdcx && dpm build`
+# Output: .daml/dist/mock-usdcx-1.0.0.dar
+# Upload via `POST /v2/dars`, then set CANTON_USDCX_PACKAGE_ID=#mock-usdcx
+# and CANTON_USDCX_TEMPLATE=MockUsdcx:Holding on the app.
+sdk-version: 3.5.1
+name: mock-usdcx
+source: .
+version: 1.0.0
+dependencies:
+  - daml-prim
+  - daml-stdlib

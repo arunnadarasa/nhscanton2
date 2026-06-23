@@ -3,6 +3,9 @@
 -- Build with `dpm build` (Daml SDK 3.5+).
 module Nhs where
 
+import qualified MockUsdcx
+
+
 template BudgetAllocation
   with
     allocator  : Party    -- DHSC or NHSEngland
@@ -58,6 +61,32 @@ template SpendCommitment
           period         = period
           supplierName   = supplierName
           settlementTxId = None
+
+    -- Atomic DvP settlement: the commissioner countersigns AND moves
+    -- mock-USDCx (or real xReserve USDCx — same wire shape) from the trust
+    -- to the on-chain supplier party, in a single Daml transaction. If
+    -- either leg fails, both revert. `paymentAmount` overrides `amountGbp`
+    -- 1:1 when present (lets you settle a partial amount in USDCx units).
+    choice SettleAndCountersign : ContractId ReconciledSpend
+      with
+        holdingCid    : ContractId MockUsdcx.Holding
+        supplierParty : Party
+      controller commissioner
+      do
+        let amt = optional amountGbp identity paymentAmount
+        transferredCid <- exercise holdingCid MockUsdcx.Transfer with
+          newOwner       = supplierParty
+          transferAmount = amt
+        create ReconciledSpend with
+          trust          = trust
+          commissioner   = commissioner
+          auditor        = auditor
+          category       = category
+          amountGbp      = amountGbp
+          period         = period
+          supplierName   = supplierName
+          settlementTxId = Some (show transferredCid)
+
 
 template ReconciledSpend
   with

@@ -1,0 +1,52 @@
+-- Mock-USDCx: minimal fungible-holding template that mimics the xReserve
+-- USDCx wire shape so the NHS app can run its atomic settlement flow on
+-- any Canton participant (no DevNet / xReserve programme required).
+--
+-- Authority model:
+--   * Holding is signed by `issuer` and observed by `owner`.
+--   * Owner controls Transfer. Issuer authority propagates from the
+--     consumed Holding's signatory, so the choice can create a new
+--     Holding for an arbitrary newOwner WITHOUT a proposal step.
+--   * Issuer creates Holdings directly (`mint`) via a plain CreateCommand
+--     submitted as the issuer party.
+module MockUsdcx where
+
+template Holding
+  with
+    issuer : Party
+    owner  : Party
+    amount : Decimal
+  where
+    signatory issuer
+    observer  owner
+
+    ensure amount > 0.0
+
+    -- Owner transfers `transferAmount` units of this Holding to `newOwner`.
+    -- The remainder (if any) stays with the owner as a fresh Holding.
+    -- Returns the ContractId of the recipient's new Holding.
+    choice Transfer : ContractId Holding
+      with
+        newOwner       : Party
+        transferAmount : Decimal
+      controller owner
+      do
+        assertMsg "transferAmount must be > 0" (transferAmount > 0.0)
+        assertMsg "insufficient balance"        (transferAmount <= amount)
+        -- Refund leftover to the original owner (issuer authority is in
+        -- scope because issuer is signatory of the consumed Holding).
+        if transferAmount < amount then do
+          _ <- create this with amount = amount - transferAmount
+          pure ()
+        else
+          pure ()
+        create this with owner = newOwner, amount = transferAmount
+
+    -- Convenience top-up; issuer-controlled.
+    choice TopUp : ContractId Holding
+      with
+        addAmount : Decimal
+      controller issuer
+      do
+        assertMsg "addAmount must be > 0" (addAmount > 0.0)
+        create this with amount = amount + addAmount
