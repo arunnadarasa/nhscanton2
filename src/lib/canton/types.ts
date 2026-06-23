@@ -44,6 +44,17 @@ export interface ReconciledSpend {
   settlementTxId?: string | null;
 }
 
+export interface Invoice {
+  trust: Party;
+  commissioner: Party;
+  auditor: Party;
+  invoiceRef: string;
+  category: string;
+  amountGbp: Decimal;
+  period: string;
+  supplier?: Party | null;
+}
+
 export interface Contract<P = unknown> {
   contractId: ContractId;
   templateId: TemplateName;
