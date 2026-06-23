@@ -40,7 +40,9 @@ Each arrow is a Daml contract on a Canton participant. Canton enforces that:
 - `Auditor` (National Audit Office) only sees `ReconciledSpend` once both sides sign.
 - DHSC sees its top-level allocations but not how an ICB redistributes its envelope.
 
-Live on [Seaport Devnet](https://app.devnet.seaport.to).
+Live on [Seaport Devnet](https://app.devnet.seaport.to). 7 NHS Trusts are
+funded with 200,000,000.00 mock-USDCx each (issuer = Auditor), ready to be
+spent end-to-end through the `SettleAndCountersign` DvP choice.
 
 ## What Our App Does
 
