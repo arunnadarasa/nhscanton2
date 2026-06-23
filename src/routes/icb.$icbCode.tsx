@@ -36,6 +36,12 @@ export const Route = createFileRoute("/icb/$icbCode")({
         queryFn: () => getCommitmentsForParty({ data: { party } }),
       }),
     );
+    context.queryClient.ensureQueryData(
+      queryOptions({
+        queryKey: ["invoice", "icb", icb.code],
+        queryFn: () => getInvoicesForParty({ data: { party } }),
+      }),
+    );
   },
   component: IcbPage,
   notFoundComponent: () => (
