@@ -94,8 +94,8 @@ All funding allocation, approval, and reconciliation processes are enforced by D
    - Self-hosted participant (Fly.io / VM) — see
      [`docs/canton-deploy/03-fly-io.md`](docs/canton-deploy/03-fly-io.md).
 
-3. Upload `.daml/dist/nhs-budget-0.1.0.dar` via `POST /v2/dars` (or Canton
-   Console).
+3. Upload `.daml/dist/nhs-budget-app-v2-1.0.1.dar` via `POST /v2/dars` (or
+   Canton Console).
 
 4. Allocate the parties (`POST /v2/parties`): `DHSC`, `NHSEngland`,
    `ICB-<code>`, `Trust-<code>`, `Auditor`.
