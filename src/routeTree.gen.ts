@@ -25,7 +25,9 @@ import { Route as ContractsNewRouteImport } from './routes/contracts.new'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicAdminSelfDiagnoseRouteImport } from './routes/api/public/admin.self-diagnose'
 import { Route as ApiPublicAdminSelfDeployRouteImport } from './routes/api/public/admin.self-deploy'
+import { Route as ApiPublicAdminListPartiesProbeRouteImport } from './routes/api/public/admin.list-parties-probe'
 import { Route as ApiPublicAdminDiagnoseRouteImport } from './routes/api/public/admin.diagnose'
+import { Route as ApiPublicAdminDeployTraceRouteImport } from './routes/api/public/admin.deploy-trace'
 import { Route as ApiPublicAdminDeployRouteImport } from './routes/api/public/admin.deploy'
 
 const LedgerRoute = LedgerRouteImport.update({
@@ -110,11 +112,23 @@ const ApiPublicAdminSelfDeployRoute =
     path: '/api/public/admin/self-deploy',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAdminListPartiesProbeRoute =
+  ApiPublicAdminListPartiesProbeRouteImport.update({
+    id: '/api/public/admin/list-parties-probe',
+    path: '/api/public/admin/list-parties-probe',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminDiagnoseRoute = ApiPublicAdminDiagnoseRouteImport.update({
   id: '/api/public/admin/diagnose',
   path: '/api/public/admin/diagnose',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminDeployTraceRoute =
+  ApiPublicAdminDeployTraceRouteImport.update({
+    id: '/api/public/admin/deploy-trace',
+    path: '/api/public/admin/deploy-trace',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminDeployRoute = ApiPublicAdminDeployRouteImport.update({
   id: '/api/public/admin/deploy',
   path: '/api/public/admin/deploy',
@@ -137,7 +151,9 @@ export interface FileRoutesByFullPath {
   '/trust/$trustId': typeof TrustTrustIdRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/admin/deploy': typeof ApiPublicAdminDeployRoute
+  '/api/public/admin/deploy-trace': typeof ApiPublicAdminDeployTraceRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
+  '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
 }
@@ -157,7 +173,9 @@ export interface FileRoutesByTo {
   '/trust/$trustId': typeof TrustTrustIdRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/admin/deploy': typeof ApiPublicAdminDeployRoute
+  '/api/public/admin/deploy-trace': typeof ApiPublicAdminDeployTraceRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
+  '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
 }
@@ -178,7 +196,9 @@ export interface FileRoutesById {
   '/trust/$trustId': typeof TrustTrustIdRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/admin/deploy': typeof ApiPublicAdminDeployRoute
+  '/api/public/admin/deploy-trace': typeof ApiPublicAdminDeployTraceRoute
   '/api/public/admin/diagnose': typeof ApiPublicAdminDiagnoseRoute
+  '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
 }
@@ -200,7 +220,9 @@ export interface FileRouteTypes {
     | '/trust/$trustId'
     | '/api/public/health'
     | '/api/public/admin/deploy'
+    | '/api/public/admin/deploy-trace'
     | '/api/public/admin/diagnose'
+    | '/api/public/admin/list-parties-probe'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
   fileRoutesByTo: FileRoutesByTo
@@ -220,7 +242,9 @@ export interface FileRouteTypes {
     | '/trust/$trustId'
     | '/api/public/health'
     | '/api/public/admin/deploy'
+    | '/api/public/admin/deploy-trace'
     | '/api/public/admin/diagnose'
+    | '/api/public/admin/list-parties-probe'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
   id:
@@ -240,7 +264,9 @@ export interface FileRouteTypes {
     | '/trust/$trustId'
     | '/api/public/health'
     | '/api/public/admin/deploy'
+    | '/api/public/admin/deploy-trace'
     | '/api/public/admin/diagnose'
+    | '/api/public/admin/list-parties-probe'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
   fileRoutesById: FileRoutesById
@@ -261,7 +287,9 @@ export interface RootRouteChildren {
   TrustTrustIdRoute: typeof TrustTrustIdRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicAdminDeployRoute: typeof ApiPublicAdminDeployRoute
+  ApiPublicAdminDeployTraceRoute: typeof ApiPublicAdminDeployTraceRoute
   ApiPublicAdminDiagnoseRoute: typeof ApiPublicAdminDiagnoseRoute
+  ApiPublicAdminListPartiesProbeRoute: typeof ApiPublicAdminListPartiesProbeRoute
   ApiPublicAdminSelfDeployRoute: typeof ApiPublicAdminSelfDeployRoute
   ApiPublicAdminSelfDiagnoseRoute: typeof ApiPublicAdminSelfDiagnoseRoute
 }
@@ -380,11 +408,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAdminSelfDeployRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin/list-parties-probe': {
+      id: '/api/public/admin/list-parties-probe'
+      path: '/api/public/admin/list-parties-probe'
+      fullPath: '/api/public/admin/list-parties-probe'
+      preLoaderRoute: typeof ApiPublicAdminListPartiesProbeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin/diagnose': {
       id: '/api/public/admin/diagnose'
       path: '/api/public/admin/diagnose'
       fullPath: '/api/public/admin/diagnose'
       preLoaderRoute: typeof ApiPublicAdminDiagnoseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/admin/deploy-trace': {
+      id: '/api/public/admin/deploy-trace'
+      path: '/api/public/admin/deploy-trace'
+      fullPath: '/api/public/admin/deploy-trace'
+      preLoaderRoute: typeof ApiPublicAdminDeployTraceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/admin/deploy': {
@@ -413,20 +455,12 @@ const rootRouteChildren: RootRouteChildren = {
   TrustTrustIdRoute: TrustTrustIdRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicAdminDeployRoute: ApiPublicAdminDeployRoute,
+  ApiPublicAdminDeployTraceRoute: ApiPublicAdminDeployTraceRoute,
   ApiPublicAdminDiagnoseRoute: ApiPublicAdminDiagnoseRoute,
+  ApiPublicAdminListPartiesProbeRoute: ApiPublicAdminListPartiesProbeRoute,
   ApiPublicAdminSelfDeployRoute: ApiPublicAdminSelfDeployRoute,
   ApiPublicAdminSelfDiagnoseRoute: ApiPublicAdminSelfDiagnoseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
