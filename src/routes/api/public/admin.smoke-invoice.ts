@@ -1,7 +1,8 @@
-// TEMP smoke test: end-to-end Invoice → ReconciledSpend on the live ledger.
+// Smoke test: end-to-end SpendCommitment → Countersign → ReconciledSpend on the live ledger.
+// (The deployed DAR exposes SpendCommitment/Countersign; Invoice is app-side only.)
 import { createFileRoute } from "@tanstack/react-router";
 
-import type { Invoice } from "@/lib/canton/types";
+import type { SpendCommitment } from "@/lib/canton/types";
 
 export const Route = createFileRoute("/api/public/admin/smoke-invoice")({
   server: {
@@ -13,29 +14,27 @@ export const Route = createFileRoute("/api/public/admin/smoke-invoice")({
           const trustCode = "GSTT";
           const icbCode = "LDN";
           const ts = Date.now();
-          const invoiceRef = `SMOKE-${ts}`;
-          const created = await c.createInvoice({
+          const category = `SMOKE-${ts}`;
+          const created = await c.createSpendCommitment({
             trust: partyTrust(trustCode),
             commissioner: partyIcb(icbCode),
             auditor: partyAuditor(),
-            invoiceRef,
-            category: "Smoke Test",
+            category,
             amountGbp: "1234.56",
             period: "2026-06",
-            supplier: "Lovable Smoke Co",
           });
-          const visible = await c.queryInvoices(partyIcb(icbCode));
+          const visible = await c.querySpendCommitments(partyIcb(icbCode));
           const found = visible.find(
-            (v: { contractId: string; payload: Invoice }) => v.contractId === created.contractId,
+            (v: { contractId: string; payload: SpendCommitment }) => v.contractId === created.contractId,
           );
           if (!found) {
             return Response.json(
-              { step: "query-invoice-as-icb", created, visibleCount: visible.length },
+              { ok: false, step: "query-as-icb", created, visibleCount: visible.length },
               { status: 500 },
             );
           }
-          const reconciled = await c.countersignInvoice(found);
-          return Response.json({ ok: true, invoiceRef, invoice: created, reconciled });
+          const reconciled = await c.countersign(found);
+          return Response.json({ ok: true, category, commitment: created, reconciled });
         } catch (e) {
           return Response.json(
             {
