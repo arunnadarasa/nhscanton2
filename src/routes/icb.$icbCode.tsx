@@ -185,7 +185,7 @@ function IcbPage() {
                 </div>
                 <div className="break-all font-mono text-[11px] leading-snug text-muted-foreground">
                   {c.payload.trust} · {c.payload.period}
-                  {c.payload.supplier && <> · → {c.payload.supplier}</>}
+                  {c.payload.supplierName && <> · → {c.payload.supplierName}</>}
                 </div>
               </div>
               <div className="shrink-0 text-right">

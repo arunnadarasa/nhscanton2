@@ -87,7 +87,7 @@ export function memUsdcxBalance(party: Party): number {
 
 export function memUsdcxSettle(
   commitment: Contract<SpendCommitment>,
-  supplier: Party,
+  supplierName: Party,
 ): { reconciled: Contract<ReconciledSpend>; settlementTxId: string } {
   const trust = commitment.payload.trust;
   const amount = parseFloat(

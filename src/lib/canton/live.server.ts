@@ -267,7 +267,7 @@ export async function liveUsdcxBalance(party: Party): Promise<number> {
 export async function liveSettle(
   commitment: Contract<SpendCommitment>,
   holdingCid: string,
-  supplier: Party,
+  supplierName: Party,
 ): Promise<{ reconciled: Contract<ReconciledSpend>; settlementTxId: string }> {
   if (!isUsdcxConfigured()) throw new Error("USDCx not configured on this participant");
   const supplierId = await resolveParty(supplier);
