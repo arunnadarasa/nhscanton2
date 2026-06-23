@@ -4,6 +4,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { getCantonEndpoints, getCantonMode } from "@/lib/canton/mode.server";
+import { requireDeployToken } from "@/lib/canton/admin-guard.server";
 
 type Step = { name: string; ms: number; ok: boolean; data?: unknown; error?: string };
 
