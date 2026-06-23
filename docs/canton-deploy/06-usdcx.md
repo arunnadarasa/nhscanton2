@@ -10,14 +10,21 @@ value transfer.
 
 ## What this app does with USDCx
 
-A `Nhs:SpendCommitment` with a `supplier` field set becomes settleable. The
-new `SettleAndCountersign` choice atomically:
+A `Nhs:SpendCommitment` carries a free-text `supplierName : Optional Text`
+(human-readable label, e.g. "AstraZeneca"). When USDCx settlement is wired in,
+the settling Trust supplies a `supplierParty : Party` as a *separate*
+choice argument — the text label and the on-chain payee are deliberately
+kept apart, because most procurement records have a supplier name long
+before they have a wallet address.
 
-1. Transfers a USDCx `Holding` from the Trust to the supplier.
-2. Archives the commitment and creates a `Nhs:ReconciledSpend`.
+The `SettleAndCountersign` choice atomically:
+
+1. Transfers a USDCx `Holding` from the Trust to `supplierParty`.
+2. Archives the commitment and creates a `Nhs:ReconciledSpend` (preserving `supplierName`).
 
 If the transfer fails (wrong owner, insufficient balance, archived contract)
 the countersignature reverts too — true DvP, no HTLC, no bridge, no oracle.
+
 
 ## Memory mode (default)
 
