@@ -149,9 +149,9 @@ export async function liveExercise<R>(
   contractId: string,
   choice: string,
   argument: unknown,
-  actAs?: Party,
+  actAs: Party,
 ): Promise<R> {
-  const submitter = actAs ?? cantonEnv("PARTY_NHSE") ?? "NHSEngland";
+  const submitter = actAs;
   const res = await submitAndWait(submitter, [
     {
       ExerciseCommand: {

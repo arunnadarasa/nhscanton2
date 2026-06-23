@@ -5,14 +5,15 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
+import { requireDeployToken } from "@/lib/canton/admin-guard.server";
+
 export const Route = createFileRoute("/api/public/admin/self-diagnose")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const token = process.env.DEPLOY_ADMIN_TOKEN;
-        if (!token) {
-          return Response.json({ error: "DEPLOY_ADMIN_TOKEN not set" }, { status: 500 });
-        }
+        const denied = requireDeployToken(request);
+        if (denied) return denied;
+        const token = process.env.DEPLOY_ADMIN_TOKEN!;
         const url = new URL("/api/public/admin/diagnose", request.url).toString();
         const cookie = request.headers.get("cookie") ?? "";
         const res = await fetch(url, {

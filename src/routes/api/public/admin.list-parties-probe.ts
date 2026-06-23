@@ -1,11 +1,14 @@
 // Debug: measure /v2/parties response size & timing on the validator.
 import { createFileRoute } from "@tanstack/react-router";
 import { getCantonEndpoints, getCantonMode } from "@/lib/canton/mode.server";
+import { requireDeployToken } from "@/lib/canton/admin-guard.server";
 
 export const Route = createFileRoute("/api/public/admin/list-parties-probe")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireDeployToken(request);
+        if (denied) return denied;
         const mode = getCantonMode();
         const { ledgerApi, adminApi } = getCantonEndpoints();
         const adminBase = ((adminApi ?? ledgerApi) ?? "").replace(/\/+$/, "");

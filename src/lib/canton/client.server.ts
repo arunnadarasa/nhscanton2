@@ -69,6 +69,7 @@ export async function subAllocate(
       parent.contractId,
       "SubAllocate",
       { toParty, amount, subPurpose },
+      parent.payload.recipient,
     );
     return {
       contractId: cid,

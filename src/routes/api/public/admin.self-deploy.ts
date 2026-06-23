@@ -4,16 +4,16 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
+import { requireDeployToken } from "@/lib/canton/admin-guard.server";
+
 type DeployBody = { parties?: string[]; userId?: string };
 
 export const Route = createFileRoute("/api/public/admin/self-deploy")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env.DEPLOY_ADMIN_TOKEN;
-        if (!token) {
-          return Response.json({ error: "DEPLOY_ADMIN_TOKEN not set" }, { status: 500 });
-        }
+        const denied = requireDeployToken(request);
+        if (denied) return denied;
         let body: DeployBody = {};
         try {
           const text = await request.text();
