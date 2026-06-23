@@ -168,7 +168,6 @@ export async function queryReconciledSpend(party: Party): Promise<Contract<Recon
 
 export async function createInvoice(payload: Invoice): Promise<Contract<Invoice>> {
   const observers = [payload.commissioner];
-  if (payload.supplier) observers.push(payload.supplier);
   if (isLive()) return liveCreate("Nhs:Invoice", payload, payload.trust);
   return memCreate("Nhs:Invoice", payload, [payload.trust], observers);
 }
