@@ -24,11 +24,14 @@ DHSC ──BudgetAllocation──▶ NHS England
                               │                                                           Auditor observer)
 ```
 
-Optional **Supplier Settlement** leg: a `SpendCommitment` with a `supplier`
-party can be atomically settled via the `SettleAndCountersign` choice, which
-transfers wrapped-USDC (USDCx, xReserve programme on Canton DevNet) to the
-supplier *and* archives into `ReconciledSpend` in a single transaction. True
-DvP — both legs commit or both revert. Visit `/trust/<code>` to try it; see
+Optional **Supplier Settlement** leg: `SpendCommitment` and `Invoice` carry
+`supplierName : Optional Text` as the human-readable payee label (kept on
+the audit trail). When USDCx settlement is wired in, the `SettleAndCountersign`
+choice takes a separate `supplierParty : Party` argument and atomically
+transfers wrapped-USDC (USDCx, xReserve programme on Canton DevNet) to that
+party *while* archiving into `ReconciledSpend` in a single transaction —
+true DvP, both legs commit or both revert. The on-chain payee stays
+distinct from the free-text label. Visit `/trust/<code>` to try it; see
 `docs/canton-deploy/06-usdcx.md` for going live on DevNet.
 
 Each arrow is a Daml contract on a Canton participant. Canton enforces that:
@@ -47,7 +50,8 @@ The NHS Ledger enables transparent and auditable healthcare funding management o
 - NHS England distributes funding to Integrated Care Boards (ICBs) through `SubAllocate`
 - ICBs further allocate funding to NHS Trusts
 - NHS Trusts create `SpendCommitment` records for healthcare expenditure
-- ICB commissioners review and approve spending through `Countersign`
+- Trusts also raise `Invoice` records for supplier-facing spend (parallel flow)
+- ICB commissioners review and approve spending through `Countersign` / `CountersignInvoice`
 - Approved expenditure is recorded as `ReconciledSpend`
 - Auditors can observe reconciled spending for compliance and governance purposes
 
@@ -70,9 +74,11 @@ All funding allocation, approval, and reconciliation processes are enforced by D
    ```bash
    cd daml && dpm build
    # optional: typed TS bindings instead of string template IDs
-   dpm codegen-js .daml/dist/nhs-budget-0.1.0.dar -o ../src/lib/canton/generated
+   dpm codegen-js .daml/dist/nhs-budget-app-v2-1.0.1.dar -o ../src/lib/canton/generated
    ```
-   (The legacy `daml` Assistant is deprecated in 3.4 and removed in 3.5.)
+   (The legacy `daml` Assistant is deprecated in 3.4 and removed in 3.5.
+   The package was renamed from `nhs-budget` to `nhs-budget-app-v2` to make
+   a non-backwards-compatible schema change without hitting `KNOWN_PACKAGE_VERSION`.)
 
 2. Stand up a Canton 3.4 participant. Recommended order:
    - **Seaport Devnet (recommended)** — managed 5N Sandbox validator on
@@ -88,8 +94,8 @@ All funding allocation, approval, and reconciliation processes are enforced by D
    - Self-hosted participant (Fly.io / VM) — see
      [`docs/canton-deploy/03-fly-io.md`](docs/canton-deploy/03-fly-io.md).
 
-3. Upload `.daml/dist/nhs-budget-0.1.0.dar` via `POST /v2/dars` (or Canton
-   Console).
+3. Upload `.daml/dist/nhs-budget-app-v2-1.0.1.dar` via `POST /v2/dars` (or
+   Canton Console).
 
 4. Allocate the parties (`POST /v2/parties`): `DHSC`, `NHSEngland`,
    `ICB-<code>`, `Trust-<code>`, `Auditor`.
@@ -189,7 +195,6 @@ Represents a spending commitment made by an NHS Trust before approval and reconc
 ### Visibility
 - Trust
 - Commissioner (ICB)
-- Optional Supplier
 
 ### Data Model
 
@@ -201,7 +206,7 @@ Represents a spending commitment made by an NHS Trust before approval and reconc
 | category | Text | Spending category |
 | amountGbp | Decimal | Amount committed (£) |
 | period | Text | Reporting period |
-| supplier | Optional Party | Supplier associated with expenditure |
+| supplierName | Optional Text | Supplier label (human-readable; not an on-chain party) |
 | paymentAmount | Optional Decimal | Settlement amount |
 
 ### Choice: Countersign
@@ -223,7 +228,6 @@ Represents approved and reconciled expenditure following commissioner review.
 - Trust
 - Commissioner
 - Auditor
-- Optional Supplier
 
 ### Data Model
 
@@ -235,13 +239,62 @@ Represents approved and reconciled expenditure following commissioner review.
 | category | Text | Spending category |
 | amountGbp | Decimal | Approved expenditure (£) |
 | period | Text | Reporting period |
-| supplier | Optional Party | Supplier receiving payment |
+| supplierName | Optional Text | Supplier label (carried through from SpendCommitment / Invoice) |
 | settlementTxId | Optional Text | Settlement transaction reference |
 
 ### Purpose
 - Maintains an immutable record of approved expenditure.
 - Supports auditing and compliance processes.
 - Provides a complete approval history for spending activities.
+
+---
+
+## Invoice
+
+Supplier-facing parallel to `SpendCommitment` — a Trust raises an invoice
+record that the commissioner countersigns into a `ReconciledSpend`.
+
+### Visibility
+- Trust (signatory)
+- Commissioner (observer)
+
+### Data Model
+
+| Field | Type | Description |
+|---------|---------|-------------|
+| trust | Party | NHS Trust raising the invoice |
+| commissioner | Party | Responsible Integrated Care Board |
+| auditor | Party | Auditor (carried through on reconciliation) |
+| invoiceRef | Text | Trust-side invoice reference |
+| category | Text | Spending category |
+| amountGbp | Decimal | Invoice amount (£) |
+| period | Text | Reporting period |
+| supplierName | Optional Text | Supplier label (human-readable; not an on-chain party) |
+
+### Choice: CountersignInvoice
+
+Controller: `commissioner`. Archives the `Invoice` and creates a
+`ReconciledSpend` carrying the same `supplierName`, with `settlementTxId = None`.
+
+---
+
+## Lessons learned
+
+Hard-won from getting NHS Ledger live on Canton:
+
+- **Free text is `Optional Text`, never `Optional Party`.** Modelling a
+  supplier label as a `Party` made every command target `UNKNOWN_INFORMEES`
+  on Devnet. If both a human label and an on-chain payee are needed, use
+  two fields: `supplierName : Optional Text` + `supplierParty : Party` (the
+  latter passed as a choice argument when actually settling).
+- **Two JWT subjects, two purposes.** `participant_admin` for node ops
+  (DAR upload, party allocation). A separate runtime user for ledger
+  commands — the validator enforces `userId == sub` of the runtime token.
+- **Schema migrations: rename the package, not the version.** A
+  non-backwards-compatible change to an installed template fails with
+  `KNOWN_PACKAGE_VERSION`. Bump the package *name* in `daml.yaml`
+  (e.g. `nhs-budget-app` → `nhs-budget-app-v2`), rebuild, and update
+  every `#nhs-budget` reference in TypeScript.
 
 
 ## Sources
