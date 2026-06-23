@@ -134,10 +134,28 @@ function TrustPage() {
     onError: (e) => toast.error("Settlement failed", { description: (e as Error).message }),
   });
 
+  const issueInvoiceFn = useServerFn(submitInvoice);
+  const invoiceM = useMutation({
+    mutationFn: issueInvoiceFn,
+    onSuccess: () => {
+      toast.success("Invoice issued to commissioner");
+      qc.invalidateQueries({
+        predicate: (q) => ["invoice", "canton"].includes(q.queryKey[0] as string),
+      });
+    },
+    onError: (e) => toast.error("Issue failed", { description: (e as Error).message }),
+  });
+
   const [category, setCategory] = useState("Staff");
   const [amount, setAmount] = useState("12000000");
   const [period, setPeriod] = useState("2024-Q4");
   const [supplier, setSupplier] = useState("");
+
+  const [invRef, setInvRef] = useState("INV-2026-04-001");
+  const [invCategory, setInvCategory] = useState("Drugs");
+  const [invAmount, setInvAmount] = useState("42500");
+  const [invPeriod, setInvPeriod] = useState("2026-04");
+  const [invSupplier, setInvSupplier] = useState("");
 
   const incoming = allocations.reduce((s, a) => s + parseFloat(a.payload.amountGbp), 0);
   const committed = commitments.reduce((s, a) => s + parseFloat(a.payload.amountGbp), 0);
