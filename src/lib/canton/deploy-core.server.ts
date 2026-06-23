@@ -89,13 +89,22 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       body: darBytes,
     });
     const uploadText = await uploadRes.text();
-    if (!uploadRes.ok && uploadRes.status !== 409) {
+    // 409 = duplicate package hash; KNOWN_PACKAGE_VERSION = same name/version,
+    // different hash but already vetted. Both mean "package is on-ledger".
+    const alreadyVetted =
+      uploadRes.status === 409 || uploadText.includes("KNOWN_PACKAGE_VERSION");
+    if (!uploadRes.ok && !alreadyVetted) {
       return Response.json(
         { mode, step: "upload-dar", status: uploadRes.status, body: uploadText.slice(0, 500) },
         { status: 502 },
       );
     }
-    darInfo = { bytes: darBytes.byteLength, status: uploadRes.status, body: uploadText.slice(0, 300) };
+    darInfo = {
+      bytes: darBytes.byteLength,
+      status: uploadRes.status,
+      body: uploadText.slice(0, 300),
+      ...(alreadyVetted && !uploadRes.ok ? { alreadyVetted: true } : {}),
+    };
   }
 
   let synchronizerId: string | undefined;
