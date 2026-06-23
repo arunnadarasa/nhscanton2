@@ -23,6 +23,7 @@ import { Route as TrustTrustIdRouteImport } from './routes/trust.$trustId'
 import { Route as IcbIcbCodeRouteImport } from './routes/icb.$icbCode'
 import { Route as ContractsNewRouteImport } from './routes/contracts.new'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as ApiPublicAdminSmokeInvoiceRouteImport } from './routes/api/public/admin.smoke-invoice'
 import { Route as ApiPublicAdminSelfDiagnoseRouteImport } from './routes/api/public/admin.self-diagnose'
 import { Route as ApiPublicAdminSelfDeployRouteImport } from './routes/api/public/admin.self-deploy'
 import { Route as ApiPublicAdminListPartiesProbeRouteImport } from './routes/api/public/admin.list-parties-probe'
@@ -100,6 +101,12 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   path: '/api/public/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminSmokeInvoiceRoute =
+  ApiPublicAdminSmokeInvoiceRouteImport.update({
+    id: '/api/public/admin/smoke-invoice',
+    path: '/api/public/admin/smoke-invoice',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminSelfDiagnoseRoute =
   ApiPublicAdminSelfDiagnoseRouteImport.update({
     id: '/api/public/admin/self-diagnose',
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
+  '/api/public/admin/smoke-invoice': typeof ApiPublicAdminSmokeInvoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
+  '/api/public/admin/smoke-invoice': typeof ApiPublicAdminSmokeInvoiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -201,6 +210,7 @@ export interface FileRoutesById {
   '/api/public/admin/list-parties-probe': typeof ApiPublicAdminListPartiesProbeRoute
   '/api/public/admin/self-deploy': typeof ApiPublicAdminSelfDeployRoute
   '/api/public/admin/self-diagnose': typeof ApiPublicAdminSelfDiagnoseRoute
+  '/api/public/admin/smoke-invoice': typeof ApiPublicAdminSmokeInvoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/list-parties-probe'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
+    | '/api/public/admin/smoke-invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/list-parties-probe'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
+    | '/api/public/admin/smoke-invoice'
   id:
     | '__root__'
     | '/'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | '/api/public/admin/list-parties-probe'
     | '/api/public/admin/self-deploy'
     | '/api/public/admin/self-diagnose'
+    | '/api/public/admin/smoke-invoice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -292,6 +305,7 @@ export interface RootRouteChildren {
   ApiPublicAdminListPartiesProbeRoute: typeof ApiPublicAdminListPartiesProbeRoute
   ApiPublicAdminSelfDeployRoute: typeof ApiPublicAdminSelfDeployRoute
   ApiPublicAdminSelfDiagnoseRoute: typeof ApiPublicAdminSelfDiagnoseRoute
+  ApiPublicAdminSmokeInvoiceRoute: typeof ApiPublicAdminSmokeInvoiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -394,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin/smoke-invoice': {
+      id: '/api/public/admin/smoke-invoice'
+      path: '/api/public/admin/smoke-invoice'
+      fullPath: '/api/public/admin/smoke-invoice'
+      preLoaderRoute: typeof ApiPublicAdminSmokeInvoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin/self-diagnose': {
       id: '/api/public/admin/self-diagnose'
       path: '/api/public/admin/self-diagnose'
@@ -460,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAdminListPartiesProbeRoute: ApiPublicAdminListPartiesProbeRoute,
   ApiPublicAdminSelfDeployRoute: ApiPublicAdminSelfDeployRoute,
   ApiPublicAdminSelfDiagnoseRoute: ApiPublicAdminSelfDiagnoseRoute,
+  ApiPublicAdminSmokeInvoiceRoute: ApiPublicAdminSmokeInvoiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
