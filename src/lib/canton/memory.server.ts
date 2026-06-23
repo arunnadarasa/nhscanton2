@@ -5,13 +5,14 @@
 import type {
   BudgetAllocation,
   Contract,
+  Invoice,
   Party,
   ReconciledSpend,
   SpendCommitment,
   TemplateName,
 } from "./types";
 
-type AnyContract = Contract<BudgetAllocation | SpendCommitment | ReconciledSpend>;
+type AnyContract = Contract<BudgetAllocation | SpendCommitment | ReconciledSpend | Invoice>;
 
 // Module-level singleton. Survives across server fn invocations within a
 // single Worker isolate — exactly the demo lifetime we need.
