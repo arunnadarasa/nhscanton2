@@ -1,34 +1,40 @@
-## Where we are
+# Fix: Invoice template missing on Canton ledger
 
-- Live ledger smoke test is green: `SpendCommitment → Countersign → ReconciledSpend` round-trips on Seaport devnet with the correct parties.
-- `Invoice` template is now in the deployed DAR (v0.1.1) and stays — both `SpendCommitment` and `Invoice` workflows are first-class.
-- `countersign` / `countersignInvoice` now correctly act as the commissioner.
-- One known wart: `self-deploy` returns 400 (`KNOWN_PACKAGE_VERSION`) on repeat runs because a previous v0.1.1 with a different hash is already vetted.
+## Root cause
 
-## Proposed next steps (in order)
+The live ledger has a stale `nhs-budget` 0.1.1 package (hash `0561570911…`) that pre-dates the `Invoice` template. Canton resolves `#nhs-budget:Nhs:Invoice` to that older package and returns `TEMPLATES_OR_INTERFACES_NOT_FOUND`. Re-uploading the current 0.1.1 fails with `KNOWN_PACKAGE_VERSION` (same name+version, different hash), and our recent idempotency change treats that as success — so the new DAR with `Invoice` never actually lands.
 
-### 1. Make `self-deploy` idempotent
-Treat `KNOWN_PACKAGE_VERSION` as success in `deploy-core.server.ts`, alongside the existing 409 dedupe. The package is already on-ledger, so this is a no-op, not a failure. Result: green `self-deploy` on every call.
+A package version on a Canton ledger is effectively immutable. The only clean fix is to publish under a new version number.
 
-### 2. Live-mode smoke for the Invoice path
-Add `/api/public/admin/smoke-invoice-live` (or a query flag on the existing route) that exercises `createInvoice → CountersignInvoice → ReconciledSpend` end-to-end on the live ledger, mirroring the SpendCommitment smoke. Confirms the new Invoice template actually works on-chain.
+## Steps
 
-### 3. Audit other `liveExercise` call sites for the same actAs bug
-`liveExercise` silently defaults to `NHSEngland`. The countersign fix patched two call sites — sweep `client.server.ts` and `live.server.ts` for any other exercise that doesn't pass an explicit `actAs`, and either pass the right party or make `actAs` a required parameter so the bug can't recur.
+1. **Bump version to 0.1.2**
+  - `daml/daml.yaml`: `version: 0.1.1` → `version: 0.1.2`.
+2. **Rebuild the DAR locally and check it in**
+  - Run `dpm build` in `daml/`.
+  - Copy the new artifact to `public/dars/nhs-budget-0.1.2.dar.bin`.
+  - Delete `public/dars/nhs-budget-0.1.1.dar.bin`.
+3. **Point the deployer at the new file**
+  - `src/lib/canton/deploy-core.server.ts`: `DAR_ASSET_PATH = "/dars/nhs-budget-0.1.2.dar.bin"`.
+4. **Tighten the idempotency guard so this can't recur silently**
+  - Keep 409 (duplicate hash) as success.
+  - Treat `KNOWN_PACKAGE_VERSION` as success **only** when the local DAR's main package hash matches a hash already vetted on the ledger. Otherwise surface a hard error: "ledger already has a different `nhs-budget` 0.1.2 — bump the version."
+  - Computing the local hash needs the DAR's main package id. Simplest path: read it from `daml/.daml/dist/nhs-budget-0.1.2.conf` or a small `dar-meta.json` we write at build time. Acceptable fallback: compare the upload response's reported package id against the ledger's listing via `/v2/packages`.
+5. **Re-run smoke**
+  - `POST /api/public/admin/self-deploy` with `x-deploy-token` — expect a fresh upload, not "alreadyVetted".
+  - `POST /api/public/admin/smoke-invoice` — expect both SpendCommitment and Invoice flows to return reconciled records.
+  - Then retry "Issue invoice to commissioner" from the UI.
 
-### 4. Lock down the temp admin endpoints
-`/api/public/admin/self-deploy`, `/self-diagnose`, `/deploy-trace`, `/smoke-invoice` are unauthenticated on the published site. Add a shared-secret check (header `x-admin-token` compared against `process.env.ADMIN_DEPLOY_TOKEN`, timing-safe). Without this, anyone can trigger a DAR upload or ledger writes.
+## Out of scope
 
-### 5. (Deferred) USDCx settlement
-`settleWithUsdcx` is still `"simulated"`. Real settlement needs the USDCx DAR as a data-dependency, the commented `SettleAndCountersign` choice enabled in `Nhs.daml`, a rebuild, and `CANTON_USDCX_PACKAGE_ID` set. Larger scope — flagging for later, not in this batch.
+- Cleaning up the stale 0.1.0 / 0.1.1 packages on the ledger (Canton doesn't expose unvet from our admin surface; harmless to leave since `#nhs-budget` will resolve to the highest version 0.1.2).
+- USDCx settlement (still deferred).
 
-## What this plan delivers
+## Question for you
 
-After steps 1–4: a clean, repeatable deploy + smoke loop covering both `SpendCommitment` and `Invoice` paths on the live ledger, with no remaining silent-default bugs and the admin endpoints no longer open to the public internet.
+Step 2 needs `dpm build` to run somewhere with the Daml 3.5 toolchain. I can't run it inside this sandbox. Two options:
 
-## Technical notes
+- **(a)** You run `dpm build` locally and upload the resulting `nhs-budget-0.1.2.dar.bin`, and I wire everything else up.
+- **(b)** I do everything except the rebuild, then hand you a one-line command and the exact path to drop the artifact at.
 
-- Step 1: one extra status check in `deploy-core.server.ts` next to the existing 409 branch — match on response body containing `KNOWN_PACKAGE_VERSION`.
-- Step 2: new route `src/routes/api/public/admin.smoke-invoice-live.ts` modeled on the existing smoke test, calling `createInvoice` then `countersignInvoice`.
-- Step 3: tighten the signature of `liveExercise` to require `actAs: Party` and remove the `?? "NHSEngland"` fallback so TypeScript surfaces any remaining call site.
-- Step 4: add a `requireAdminToken(request)` helper used by all four admin routes; secret added via `add_secret` (`ADMIN_DEPLOY_TOKEN`).
+Which do you prefer? Attempt to run it on your sandbox, you can do it

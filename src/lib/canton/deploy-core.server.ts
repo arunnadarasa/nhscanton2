@@ -5,7 +5,7 @@ import { getCantonEndpoints, getCantonMode } from "@/lib/canton/mode.server";
 import { ICBS, TRUSTS } from "@/lib/nhs/data";
 
 const DEFAULT_USER_ID = "lovable-nhs-app";
-const DAR_ASSET_PATH = "/dars/nhs-budget-0.1.1.dar.bin";
+const DAR_ASSET_PATH = "/dars/nhs-budget-0.1.2.dar.bin";
 
 function defaultParties() {
   return [
@@ -95,13 +95,24 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       body: darBytes,
     });
     const uploadText = await uploadRes.text();
-    // 409 = duplicate package hash; KNOWN_PACKAGE_VERSION = same name/version,
-    // different hash but already vetted. Both mean "package is on-ledger".
-    const alreadyVetted =
-      uploadRes.status === 409 || uploadText.includes("KNOWN_PACKAGE_VERSION");
-    if (!uploadRes.ok && !alreadyVetted) {
+    // 409 = duplicate package hash (exact same DAR already on-ledger) — safe.
+    // KNOWN_PACKAGE_VERSION = a *different* DAR with the same name+version is
+    // on-ledger. Treating this as success is dangerous: ledger keeps the old
+    // package, `#nhs-budget` resolves to it, and any new templates we added
+    // are invisible (TEMPLATES_OR_INTERFACES_NOT_FOUND at runtime). Fail loud.
+    const exactDup = uploadRes.status === 409;
+    const versionClash = uploadText.includes("KNOWN_PACKAGE_VERSION");
+    if (!uploadRes.ok && !exactDup) {
       return Response.json(
-        { mode, step: "upload-dar", status: uploadRes.status, body: uploadText.slice(0, 500) },
+        {
+          mode,
+          step: "upload-dar",
+          status: uploadRes.status,
+          body: uploadText.slice(0, 500),
+          hint: versionClash
+            ? "Ledger already has a *different* nhs-budget DAR at this version. Bump version in daml/daml.yaml, rebuild, and redeploy."
+            : undefined,
+        },
         { status: 502 },
       );
     }
@@ -109,7 +120,7 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       bytes: darBytes.byteLength,
       status: uploadRes.status,
       body: uploadText.slice(0, 300),
-      ...(alreadyVetted && !uploadRes.ok ? { alreadyVetted: true } : {}),
+      ...(exactDup ? { alreadyVetted: true } : {}),
     };
   }
 
