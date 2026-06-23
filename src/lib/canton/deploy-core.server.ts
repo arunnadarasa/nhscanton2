@@ -125,9 +125,45 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
   const existingRows = await listParties().catch(() => []);
   const existing = new Map(existingRows.map((r) => [r.logical_name, r.party_id]));
 
+  // Compute which parties we still need to resolve. We pre-load the
+  // participant's already-hosted parties ONCE on Devnet (where re-allocating
+  // an existing partyIdHint fails with "already allocated" and the truncated
+  // error cause makes the suffix unrecoverable). This avoids per-hint
+  // fallback fetches that would 502 on Cloudflare due to subrequest + CPU
+  // budgets when /v2/parties returns ~10k parties.
+  const missingHints = parties.filter((h) => !existing.has(h));
+
+  let hostedByHint = new Map<string, string>();
+  if (mode === "devnet" && missingHints.length > 0) {
+    const missingSet = new Set(missingHints);
+    let pageToken: string | undefined;
+    for (let page = 0; page < 40 && missingSet.size > 0; page++) {
+      const qs = new URLSearchParams({ pageSize: "2000" });
+      if (pageToken) qs.set("pageToken", pageToken);
+      const r = await fetch(`${adminBase}/v2/parties?${qs.toString()}`, { headers: auth });
+      if (!r.ok) break;
+      const j = (await r.json().catch(() => ({}))) as {
+        partyDetails?: Array<{ party: string; isLocal?: boolean }>;
+        nextPageToken?: string;
+      };
+      for (const p of j.partyDetails ?? []) {
+        if (p.isLocal !== true) continue;
+        const idx = p.party.indexOf("::");
+        if (idx <= 0) continue;
+        const hint = p.party.slice(0, idx);
+        if (missingSet.has(hint) && !hostedByHint.has(hint)) {
+          hostedByHint.set(hint, p.party);
+          missingSet.delete(hint);
+        }
+      }
+      if (!j.nextPageToken) break;
+      pageToken = j.nextPageToken;
+    }
+  }
+
   const allocs: AllocResult[] = [];
   for (const hint of parties) {
-    const known = existing.get(hint);
+    const known = existing.get(hint) ?? hostedByHint.get(hint);
     if (known) {
       allocs.push({ hint, partyId: known });
       continue;
@@ -154,14 +190,6 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
             new RegExp(`${hint.replace(/[-\\^$*+?.()|[\\]{}]/g, "\\\\$&")}::[0-9a-fA-F]+`),
           );
           if (m) partyId = m[0];
-          if (!partyId) {
-            const listRes = await fetch(`${adminBase}/v2/parties`, { headers: auth });
-            const list = (await listRes.json().catch(() => ({}))) as {
-              partyDetails?: Array<{ party: string }>;
-            };
-            const found = list.partyDetails?.find((p) => p.party.startsWith(`${hint}::`));
-            if (found) partyId = found.party;
-          }
         }
       }
       if (!partyId) {
@@ -194,6 +222,8 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       allocs.push({ hint, error: e instanceof Error ? e.message : "fetch-failed" });
     }
   }
+
+
 
   const failed = allocs.filter((a) => a.error);
   if (failed.length > 0) {
