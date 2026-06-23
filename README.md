@@ -74,9 +74,11 @@ All funding allocation, approval, and reconciliation processes are enforced by D
    ```bash
    cd daml && dpm build
    # optional: typed TS bindings instead of string template IDs
-   dpm codegen-js .daml/dist/nhs-budget-0.1.0.dar -o ../src/lib/canton/generated
+   dpm codegen-js .daml/dist/nhs-budget-app-v2-1.0.1.dar -o ../src/lib/canton/generated
    ```
-   (The legacy `daml` Assistant is deprecated in 3.4 and removed in 3.5.)
+   (The legacy `daml` Assistant is deprecated in 3.4 and removed in 3.5.
+   The package was renamed from `nhs-budget` to `nhs-budget-app-v2` to make
+   a non-backwards-compatible schema change without hitting `KNOWN_PACKAGE_VERSION`.)
 
 2. Stand up a Canton 3.4 participant. Recommended order:
    - **Seaport Devnet (recommended)** — managed 5N Sandbox validator on
