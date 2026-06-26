@@ -2,28 +2,50 @@
 
 Symptom → most-likely cause → fix. Work top-down.
 
+## `403 "A security-sensitive error has been received"` (Devnet, opaque)
+
+Canton deliberately strips detail to avoid leaking schema info. In 9 cases out of 10 it's one of:
+
+1. **Missing `CanActAs` on a signatory party.** Most common after uploading a new DAR — e.g. you treated `Auditor` as observer-only but it's a signatory on `mock-usdcx`. Re-run bootstrap with `CanActAs` granted on **every** allocated party.
+2. **`userId` in the command body doesn't match the runtime token's `sub` claim.** See `seaport-devnet.md` — derive `userId` from `decodeJwt(token).sub`, never hardcode.
+3. **`actAs` includes a party your runtime user has no rights on.** Same as (1).
+
+Test (1) first — it's both the most common and the cheapest to verify.
+
 ## `PERMISSION_DENIED` on every ledger read
 
-You're using the admin JWT (`sub: participant_admin`) for ledger queries. The admin grant covers node admin endpoints, NOT data access.
+You're using the admin/bootstrap token for ledger queries. Admin grants don't include data access.
 
-Fix: create a runtime user, grant it `CanReadAs` / `CanActAs` on each party, mint tokens with `sub: <that user id>`. See `jwt-auth.md`.
+Fix: create a runtime user, grant `CanReadAs` / `CanActAs`, mint tokens with `sub: <that user id>`. See `jwt-auth.md`.
 
-## `404 UNKNOWN_RESOURCE: Provided parties have not been found`
+## `UNKNOWN_INFORMEES: Submitter cannot act on behalf of unknown party 'X'`
 
-The parties listed in the error exist on a **different participant** than the one currently serving requests. You're running multi-machine.
+You sent user-typed text into a `Party` field. `Party` MUST be a real ledger participant. Change the field to `Optional Text` (and add a separate `Optional Party` if you need on-chain identity too). See `references/dar-lifecycle.md` → "Free text vs Party".
+
+## `KNOWN_PACKAGE_VERSION` on DAR upload
+
+You changed a template and bumped the patch version under the same package name. Canton refuses because the new hash differs from the previously-uploaded `1.0.X`. Bump the package **name** (`foo` → `foo-v2`) instead. See `dar-lifecycle.md`.
+
+## `Couldn't find template <pkgid>:Module:Template` after a deploy
+
+The DAR wasn't re-uploaded; the app references a package id that's not installed (or that an older bootstrap once installed, then a fresh participant didn't). Force DAR upload on every deploy — don't gate it on "if not present". See `bootstrap-flow.md`.
+
+## `404 UNKNOWN_RESOURCE: Provided parties have not been found` (Fly)
+
+The parties listed exist on a **different participant** than the one serving requests. You're running multi-machine.
 
 Verify:
 ```bash
 flyctl machines list -a "$APP_NAME"     # > 1 machine?
 ```
 
-Look at the bootstrap response — do party IDs contain two distinct fingerprints (`Name::<fpA>` and `Name::<fpB>`)? That's the smoking gun.
+Look at the bootstrap response — party IDs with two distinct fingerprints (`Name::<fpA>` vs `Name::<fpB>`) is the smoking gun.
 
-Fix: `flyctl scale count 1 -a "$APP_NAME" --yes`, destroy any extra machines, re-run bootstrap. See `fly-single-machine.md`.
+Fix: `flyctl scale count 1 -a "$APP_NAME" --yes`, destroy extras, re-run bootstrap. See `fly-single-machine.md`.
 
 ## `404 USER_NOT_FOUND` on rights grant
 
-The ledger user exists on a destroyed machine, or was never created on this one. Re-run step 4 of bootstrap (create user) before step 5 (rights).
+The user exists on a destroyed machine, or was never created on this one. Re-run step 4 (create user) before step 5 (rights). On Devnet, also verify the user id you're granting rights to matches the runtime token's `sub`.
 
 ## `400 Invalid value for: body (Missing required field at 'isDeactivated')` on `POST /v2/users`
 
@@ -44,15 +66,23 @@ Two common causes:
 
 ## `Canton: no CreatedEvent in transaction` after submission
 
-You called `/v2/commands/submit-and-wait` and tried to read `transaction.events`. That endpoint returns only `{ updateId, completionOffset }`. Switch to `/v2/commands/submit-and-wait-for-transaction` and remember the body must be wrapped: `{ commands: { commands, userId, commandId, actAs, readAs } }`. See `json-ledger-api-v2.md`.
+You called `/v2/commands/submit-and-wait` and tried to read `transaction.events`. That endpoint returns only `{ updateId, completionOffset }`. Switch to `/v2/commands/submit-and-wait-for-transaction` with the wrapped body. See `json-ledger-api-v2.md`.
 
 ## `400 Missing required field at 'commands.commands'` on submit
 
-You're hitting `/v2/commands/submit-and-wait-for-transaction` with the flat body shape that `submit-and-wait` accepts. Wrap the whole thing in a `commands` object:
+You're hitting `/v2/commands/submit-and-wait-for-transaction` with the flat body shape that `submit-and-wait` accepts. Wrap it:
 
 ```json
 { "commands": { "commands": [...], "userId": "...", "commandId": "...", "actAs": [...], "readAs": [] } }
 ```
+
+## `502` from `GET /v2/parties` on Devnet
+
+Unpaged call against a 10k+ party network times out through Cloudflare. Use `pageSize=2000` + `pageToken` and accumulate. See `seaport-devnet.md` → "Paginated party resolution".
+
+## `403` / `451` fetching `/dars/foo.dar` from Cloudflare
+
+`.dar` is on Cloudflare's blocked-extension list. Rename the served asset to `.dar.bin` and update the fetch path. See `dar-lifecycle.md`.
 
 ## App lists are empty even though `getActiveContracts` returns rows
 
@@ -63,17 +93,16 @@ const sameParty = (p: string, name: string) =>
   p === name || p.startsWith(`${name}::`);
 ```
 
-Or resolve the logical name to the fully-qualified id via the bootstrap-persisted mapping (see `bootstrap-flow.md`) before filtering.
-
-This is the UI-side counterpart to the "persist the logical→fully-qualified mapping" invariant — bootstrap captures the id, but every read site has to use it (or compare by prefix).
+Or resolve via the bootstrap-persisted mapping before filtering.
 
 ## `Authorization: Bearer ...` rejected with `UNAUTHENTICATED`
 
-- `aud` mismatch — must match `canton.conf` (`canton-ledger-api` is the default in this skill).
-- Token expired — TTL is short (5 min by design); check `iat` / `exp`.
-- Wrong key — the participant's public cert doesn't match the private key you signed with. Re-bake the cert into the Docker image or re-issue the keypair.
+- `aud` mismatch — must match `canton.conf` / IdP-registered audience.
+- Token expired — TTL is short; check `iat` / `exp`.
+- Wrong key (Fly) — participant's public cert doesn't match the private key. Re-bake or re-issue.
+- Wrong OIDC client (Devnet) — bootstrap and runtime clients may have different audiences.
 
-## `503` or connection refused
+## `503` or connection refused (Fly)
 
 Canton is still booting. Wait up to 60s. If it never comes up:
 
@@ -83,32 +112,27 @@ flyctl logs -a "$APP_NAME" --no-tail | tail -n 200
 
 Look for OOM (`OutOfMemoryError`, `Killed`), config parse errors, or port-binding failures. If OOM, bump the VM to 4 GB and raise `JAVA_OPTS=-Xmx3000m`.
 
-## Participant fingerprint changed unexpectedly
+## Participant fingerprint changed unexpectedly (Fly)
 
-You destroyed and recreated the volume, or the volume was wiped. The participant generates a fresh identity on first boot. All previously-allocated party IDs are now stale.
+You destroyed and recreated the volume. The participant generates a fresh identity on first boot — all stored party IDs are stale.
 
-Fix: re-run bootstrap. It re-allocates everything fresh and updates the persisted `canton_parties` map.
-
-## Fly machine restarts loop
-
-Health check failing. Check `/v2/state/ledger-end` returns `401` (without auth) or `200` (with admin token). If your `[[services.http_checks]]` uses a path that requires auth and you didn't send one, the check 401s and Fly might interpret that as failure — switch the check path or accept 401.
+Fix: re-run bootstrap. It re-allocates everything fresh and updates `canton_parties`.
 
 ## After everything passes, app still shows empty data
 
-Expected. A freshly-bootstrapped ledger has no contracts. Create one via your app's allocator/command path and verify it appears in `/ledger` or wherever you list contracts. If it doesn't:
+Expected on a freshly-bootstrapped ledger. Create one contract via your allocator and verify it appears. If it doesn't:
 
-- Your `liveQuery` is filtering by a party your runtime user doesn't have `CanReadAs` on. Add it to the grant list and re-run step 5.
-- You created the contract acting as a party your runtime user doesn't have `CanActAs` on — Canton would have refused submission with `PERMISSION_DENIED` on the command, so check submission logs too.
-- The filter compares the logical party name against a fully-qualified contract payload party — see "App lists are empty even though `getActiveContracts` returns rows" above.
+- `liveQuery` filtering by a party your runtime user has no `CanReadAs` on. Add it and re-run step 5.
+- You created the contract acting as a party your runtime user has no `CanActAs` on — Canton would have refused at command time, so check submission logs.
+- Filter compares logical party name against fully-qualified payload party — see "App lists are empty" above.
 
 ## `dpm build` fails with `./.daml/package-database/2.2: getDirectoryContents:openDirStream: does not exist`
 
-A partial `.daml/` build cache is checked into git (typically `package-database/metadata.json` advertising SDK 2.2, but no `2.2/` subdirectory). Locally `dpm` regenerates it; CI builders (Seaport, Fly remote build, GitHub Actions) inherit the broken cache and bail before compiling.
-
-Fix:
+A partial `.daml/` cache got committed. Fix:
 
 ```bash
 rm -rf daml/.daml
+echo ".daml/" >> daml/.gitignore
 ```
 
-Ensure `daml/.gitignore` contains `.daml/` so it can't get re-committed. Re-run the build; `dpm` will repopulate the package-db cleanly.
+Re-run; `dpm` repopulates the package-db cleanly.
