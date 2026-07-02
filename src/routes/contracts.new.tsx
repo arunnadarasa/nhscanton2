@@ -12,7 +12,20 @@ import {
   listActiveContracts,
   listKnownParties,
 } from "@/lib/canton/contracts.functions";
-import { TEMPLATE_LIST, TEMPLATES, type TemplateId } from "@/lib/canton/templates";
+import {
+  TEMPLATE_LIST,
+  TEMPLATES,
+  TEMPLATES_BY_CATEGORY,
+  type TemplateCategory,
+  type TemplateId,
+} from "@/lib/canton/templates";
+
+const CATEGORY_LABEL: Record<TemplateCategory, string> = {
+  privacy: "Privacy flow",
+  tokenisation: "Tokenisation",
+  proofs: "Proofs & settlement",
+  invoice: "Invoice",
+};
 
 export const Route = createFileRoute("/contracts/new")({
   head: () => ({
