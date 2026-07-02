@@ -34,7 +34,7 @@ export const Route = createFileRoute("/contracts/new")({
       {
         name: "description",
         content:
-          "Generic Daml template form — pick BudgetAllocation, ReconciledSpend or SpendCommitment and create on the live Canton ledger.",
+          "Generic Daml template form — privacy-enhanced allocations, tokenisation, proofs, and invoices on the live Canton ledger.",
       },
       { property: "og:title", content: "Create Contract · NHS Ledger" },
       {
