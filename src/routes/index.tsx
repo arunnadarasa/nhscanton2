@@ -339,6 +339,11 @@ function HomePage() {
         </div>
       </section>
 
+      {/* ─── FAQ ─────────────────────────────────────────────── */}
+      <FaqSection />
+
+
+
       {/* ─── Sources ─────────────────────────────────────────── */}
       <section className="mt-12 rounded-3xl border border-border bg-secondary/40 p-8 backdrop-blur md:p-10">
         <h3 className="font-display text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">
