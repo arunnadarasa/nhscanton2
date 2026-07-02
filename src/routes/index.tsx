@@ -136,6 +136,21 @@ function HomePage() {
             </Link>
           </div>
 
+          <dl className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-border/50 pt-5 text-xs md:mt-10">
+            {[
+              { k: "On-ledger contracts", v: contracts.length.toString() },
+              { k: "ICBs modelled", v: ICBS.length.toString() },
+              { k: "Fiscal year", v: NHS_HEADLINE.fiscalYear },
+              { k: "Network", v: "Canton 3.4" },
+            ].map((m) => (
+              <div key={m.k} className="flex items-baseline gap-2">
+                <dt className="font-semibold uppercase tracking-[0.16em] text-[10px] text-muted-foreground">
+                  {m.k}
+                </dt>
+                <dd className="font-mono text-sm font-bold text-foreground">{m.v}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
