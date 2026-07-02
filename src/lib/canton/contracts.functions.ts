@@ -5,17 +5,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { TEMPLATES, type TemplateId } from "./templates";
+import { TEMPLATES, TEMPLATE_IDS, hashText, type TemplateId } from "./templates";
 import type { Json } from "@/integrations/supabase/types";
 import type { BudgetAllocation, Invoice, ReconciledSpend, SpendCommitment } from "./types";
 
 
-const templateIdSchema = z.enum([
-  "Nhs:BudgetAllocation",
-  "Nhs:SpendCommitment",
-  "Nhs:ReconciledSpend",
-  "Nhs:Invoice",
-]) satisfies z.ZodType<TemplateId>;
+const templateIdSchema = z.enum(TEMPLATE_IDS) satisfies z.ZodType<TemplateId>;
 
 const createSchema = z.object({
   templateId: templateIdSchema,

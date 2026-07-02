@@ -19,12 +19,13 @@ import {
   createContract,
   listKnownParties,
 } from "@/lib/canton/contracts.functions";
-import { TEMPLATES, type TemplateId, type FieldKind } from "@/lib/canton/templates";
+import { TEMPLATES, hashText, type TemplateId, type FieldKind } from "@/lib/canton/templates";
 
 const KIND_BADGE: Record<FieldKind, { label: string; cls: string }> = {
   party: { label: "Party", cls: "bg-blue-500/15 text-blue-700 border-blue-500/30" },
   text: { label: "Text", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
   numeric: { label: "Numeric", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+  hash: { label: "Commitment", cls: "bg-violet-500/15 text-violet-700 border-violet-500/30" },
 };
 
 function shortParty(id: string) {
@@ -99,7 +100,13 @@ export function CreateContractForm({ templateId }: Props) {
     }
     const payload: Record<string, string | null> = {};
     for (const f of tpl.fields) {
-      const v = values[f.name]?.trim() ?? "";
+      let v: string;
+      if (f.kind === "hash" && f.derivedFrom) {
+        const source = values[f.derivedFrom]?.trim() ?? "";
+        v = source === "" ? "" : hashText(source);
+      } else {
+        v = values[f.name]?.trim() ?? "";
+      }
       payload[f.name] = v === "" ? null : v;
     }
     mutation.mutate({ templateId, actAs, payload });
@@ -218,6 +225,21 @@ export function CreateContractForm({ templateId }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
+              ) : f.kind === "hash" ? (
+                <div className="rounded-md border border-dashed border-violet-500/40 bg-violet-500/5 px-3 py-2 font-mono text-xs text-violet-800">
+                  {(() => {
+                    const source = f.derivedFrom ? values[f.derivedFrom]?.trim() : "";
+                    if (!source) {
+                      return (
+                        <span className="text-muted-foreground">
+                          Auto-derived from{" "}
+                          <code className="font-semibold">{f.derivedFrom}</code>
+                        </span>
+                      );
+                    }
+                    return `hash(${f.derivedFrom}) = ${hashText(source)}`;
+                  })()}
+                </div>
               ) : (
                 <Input
                   type={f.kind === "numeric" ? "number" : "text"}
@@ -226,6 +248,9 @@ export function CreateContractForm({ templateId }: Props) {
                   onChange={(e) => setField(f.name, e.target.value)}
                   placeholder={f.placeholder}
                 />
+              )}
+              {f.help && (
+                <p className="text-[11px] text-muted-foreground">{f.help}</p>
               )}
             </div>
           );

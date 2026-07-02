@@ -12,7 +12,20 @@ import {
   listActiveContracts,
   listKnownParties,
 } from "@/lib/canton/contracts.functions";
-import { TEMPLATE_LIST, TEMPLATES, type TemplateId } from "@/lib/canton/templates";
+import {
+  TEMPLATE_LIST,
+  TEMPLATES,
+  TEMPLATES_BY_CATEGORY,
+  type TemplateCategory,
+  type TemplateId,
+} from "@/lib/canton/templates";
+
+const CATEGORY_LABEL: Record<TemplateCategory, string> = {
+  privacy: "Privacy flow",
+  tokenisation: "Tokenisation",
+  proofs: "Proofs & settlement",
+  invoice: "Invoice",
+};
 
 export const Route = createFileRoute("/contracts/new")({
   head: () => ({
@@ -21,7 +34,7 @@ export const Route = createFileRoute("/contracts/new")({
       {
         name: "description",
         content:
-          "Generic Daml template form — pick BudgetAllocation, ReconciledSpend or SpendCommitment and create on the live Canton ledger.",
+          "Generic Daml template form — privacy-enhanced allocations, tokenisation, proofs, and invoices on the live Canton ledger.",
       },
       { property: "og:title", content: "Create Contract · NHS Ledger" },
       {
@@ -34,7 +47,9 @@ export const Route = createFileRoute("/contracts/new")({
 });
 
 function CreateContractPage() {
-  const [templateId, setTemplateId] = useState<TemplateId>("Nhs:BudgetAllocation");
+  const [templateId, setTemplateId] = useState<TemplateId>(
+    "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy",
+  );
 
   return (
     <AppShell>
@@ -55,30 +70,46 @@ function CreateContractPage() {
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Templates ({TEMPLATE_LIST.length})
             </div>
-            <div className="space-y-2">
-              {TEMPLATE_LIST.map((t) => {
-                const active = t.id === templateId;
+            <div className="space-y-5">
+              {(Object.keys(TEMPLATES_BY_CATEGORY) as TemplateCategory[]).map((cat) => {
+                const items = TEMPLATES_BY_CATEGORY[cat];
+                if (items.length === 0) return null;
                 return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setTemplateId(t.id)}
-                    className={`flex w-full flex-col items-start rounded-xl border p-3 text-left transition ${
-                      active
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-white hover:bg-secondary"
-                    }`}
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <div className="font-semibold text-sm">{t.label}</div>
-                      <Badge variant="outline" className="text-[10px]">
-                        {t.fields.length} fields
-                      </Badge>
+                  <div key={cat} className="space-y-2">
+                    <div className="px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
+                      {CATEGORY_LABEL[cat]}
                     </div>
-                    <div className="mt-0.5 text-[11px] font-mono text-muted-foreground">
-                      {t.module}:{t.label}
-                    </div>
-                  </button>
+                    {items.map((t) => {
+                      const active = t.id === templateId;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setTemplateId(t.id)}
+                          className={`flex w-full flex-col items-start rounded-xl border p-3 text-left transition ${
+                            active
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-white hover:bg-secondary"
+                          }`}
+                        >
+                          <div className="flex w-full items-center justify-between gap-2">
+                            <div className="font-semibold text-sm">{t.label}</div>
+                            <Badge variant="outline" className="text-[10px]">
+                              {t.fields.length} fields
+                            </Badge>
+                          </div>
+                          {t.description && (
+                            <div className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                              {t.description}
+                            </div>
+                          )}
+                          <div className="mt-1 text-[10px] font-mono text-muted-foreground/80">
+                            {t.module}:{t.label}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>

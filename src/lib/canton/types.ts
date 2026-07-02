@@ -6,10 +6,23 @@ export type ContractId = string;
 export type Decimal = string; // numeric string, e.g. "192300000000.00"
 
 export type TemplateName =
+  // Original Nhs module (still in the DAR — backs the curated workflow pages)
   | "Nhs:BudgetAllocation"
   | "Nhs:SpendCommitment"
   | "Nhs:ReconciledSpend"
-  | "Nhs:Invoice";
+  | "Nhs:Invoice"
+  // Privacy flow (NhsTokenisedBudgetAllocation module — used by generic form)
+  | "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy"
+  | "NhsTokenisedBudgetAllocation:SpendCommitmentPrivacy"
+  | "NhsTokenisedBudgetAllocation:ReconciledSpendPrivacy"
+  // Tokenisation
+  | "NhsTokenisedBudgetAllocation:TokenisationRequest"
+  | "NhsTokenisedBudgetAllocation:NhsFundingToken"
+  | "NhsTokenisedBudgetAllocation:TokenRedemption"
+  // Proofs & private settlement
+  | "NhsTokenisedBudgetAllocation:PrivateSettlement"
+  | "NhsTokenisedBudgetAllocation:ProofOfAmount"
+  | "NhsTokenisedBudgetAllocation:ProofOfSupplier";
 
 export interface BudgetAllocation {
   allocator: Party;
