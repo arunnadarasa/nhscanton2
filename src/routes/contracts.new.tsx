@@ -34,7 +34,9 @@ export const Route = createFileRoute("/contracts/new")({
 });
 
 function CreateContractPage() {
-  const [templateId, setTemplateId] = useState<TemplateId>("Nhs:BudgetAllocation");
+  const [templateId, setTemplateId] = useState<TemplateId>(
+    "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy",
+  );
 
   return (
     <AppShell>
