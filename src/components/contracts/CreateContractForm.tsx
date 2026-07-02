@@ -225,6 +225,21 @@ export function CreateContractForm({ templateId }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
+              ) : f.kind === "hash" ? (
+                <div className="rounded-md border border-dashed border-violet-500/40 bg-violet-500/5 px-3 py-2 font-mono text-xs text-violet-800">
+                  {(() => {
+                    const source = f.derivedFrom ? values[f.derivedFrom]?.trim() : "";
+                    if (!source) {
+                      return (
+                        <span className="text-muted-foreground">
+                          Auto-derived from{" "}
+                          <code className="font-semibold">{f.derivedFrom}</code>
+                        </span>
+                      );
+                    }
+                    return `hash(${f.derivedFrom}) = ${hashText(source)}`;
+                  })()}
+                </div>
               ) : (
                 <Input
                   type={f.kind === "numeric" ? "number" : "text"}
@@ -233,6 +248,9 @@ export function CreateContractForm({ templateId }: Props) {
                   onChange={(e) => setField(f.name, e.target.value)}
                   placeholder={f.placeholder}
                 />
+              )}
+              {f.help && (
+                <p className="text-[11px] text-muted-foreground">{f.help}</p>
               )}
             </div>
           );
