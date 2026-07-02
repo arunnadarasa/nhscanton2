@@ -479,6 +479,137 @@ function Feature({
   );
 }
 
+// ─── FAQ section ─────────────────────────────────────────────
+
+const FAQS: { q: string; a: React.ReactNode }[] = [
+  {
+    q: "What is this app?",
+    a: (
+      <>
+        A working demo of the NHS budget flow modelled on the Canton Network:
+        DHSC funds NHS England, NHS England sub-allocates to 42 ICBs, ICBs
+        commission Trusts, and Trusts countersign spend. Every step is a Daml
+        contract with template-level privacy.
+      </>
+    ),
+  },
+  {
+    q: "Is this real NHS money?",
+    a: (
+      <>
+        No. The figures come from published NHS England, King's Fund and
+        Nuffield Trust datasets. On-chain settlement uses <strong>mock-USDCx</strong> —
+        a self-issued token that mimics the xReserve USDCx wire shape — <em>not</em>{" "}
+        real USDC.x. Wire-compatible so the same code runs against real USDCx on
+        Canton DevNet.
+      </>
+    ),
+  },
+  {
+    q: "Who can see what on the ledger?",
+    a: (
+      <>
+        Each contract is disclosed only to its signatories and observers. A
+        Trust's line-item spend is visible to that Trust, its commissioning ICB,
+        and the National Audit Office as a read-only stream. Other ICBs and
+        Trusts see nothing.
+      </>
+    ),
+  },
+  {
+    q: "Why Canton and not Ethereum?",
+    a: (
+      <>
+        Canton offers per-contract privacy without extra cryptography, atomic
+        multi-party workflows, and no shared global state.{" "}
+        <Link to="/canton-vs-evm" className="font-semibold text-primary hover:underline">
+          See the side-by-side comparison →
+        </Link>
+      </>
+    ),
+  },
+  {
+    q: "How does settlement work?",
+    a: (
+      <>
+        An ICB exercises <code className="font-mono text-xs">SettleAndCountersign</code>{" "}
+        on a Trust's <code className="font-mono text-xs">SpendCommitment</code>.
+        In a single atomic Daml transaction it countersigns the commitment and
+        transfers mock-USDCx to the supplier party. Either both legs commit or
+        neither does.
+      </>
+    ),
+  },
+  {
+    q: "Can I point this at a real Canton participant?",
+    a: (
+      <>
+        Yes — the app talks JSON Ledger API v2 directly. Set three env vars
+        (ledger URL, party IDs, JWT) and it goes live.{" "}
+        <Link to="/deploy" className="font-semibold text-primary hover:underline">
+          Deployment guide →
+        </Link>
+      </>
+    ),
+  },
+  {
+    q: "Where does the data come from?",
+    a: (
+      <>
+        NHS England allocation tables, King's Fund provider-deficit datasets,
+        and Nuffield Trust category breakdowns. All sources are linked below.
+      </>
+    ),
+  },
+];
+
+function FaqSection() {
+  return (
+    <section className="mt-12">
+      <div className="mb-8 max-w-3xl">
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent">
+          Questions
+        </p>
+        <h2 className="mt-2 font-display text-3xl font-bold text-foreground md:text-4xl">
+          Frequently asked
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+          Short answers on scope, privacy, settlement, and running this against
+          a live Canton participant.
+        </p>
+      </div>
+
+      <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-card/80 p-2 shadow-soft backdrop-blur-sm md:p-4">
+        <span
+          aria-hidden
+          className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+        />
+        <Accordion type="single" collapsible className="w-full">
+          {FAQS.map((f, i) => (
+            <AccordionItem
+              key={i}
+              value={`faq-${i}`}
+              className="border-border/60 px-4 last:border-b-0 md:px-6"
+            >
+              <AccordionTrigger className="py-5 text-left font-display text-base font-semibold text-foreground hover:no-underline hover:text-primary md:text-lg">
+                <span className="flex items-center gap-3">
+                  <HelpCircle className="h-4 w-4 shrink-0 text-accent" />
+                  {f.q}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="pb-5 pl-7 pr-2 text-sm leading-relaxed text-muted-foreground md:text-[15px]">
+                {f.a}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </section>
+  );
+}
+  );
+}
+
 // ─── Workflow section ────────────────────────────────────────
 
 type WorkflowStep = {
