@@ -15,7 +15,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight, ShieldCheck, Zap, Plug, ExternalLink, Eye } from "lucide-react";
+import { ArrowUpRight, ShieldCheck, Zap, Plug, ExternalLink, Eye, HelpCircle } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 import { AppShell, ledgerModeQuery } from "@/components/AppShell";
 import {
