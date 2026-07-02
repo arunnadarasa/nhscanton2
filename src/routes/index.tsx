@@ -607,8 +607,7 @@ function FaqSection() {
     </section>
   );
 }
-  );
-}
+
 
 // ─── Workflow section ────────────────────────────────────────
 
