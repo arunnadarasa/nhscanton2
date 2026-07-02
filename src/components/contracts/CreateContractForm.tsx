@@ -100,7 +100,13 @@ export function CreateContractForm({ templateId }: Props) {
     }
     const payload: Record<string, string | null> = {};
     for (const f of tpl.fields) {
-      const v = values[f.name]?.trim() ?? "";
+      let v: string;
+      if (f.kind === "hash" && f.derivedFrom) {
+        const source = values[f.derivedFrom]?.trim() ?? "";
+        v = source === "" ? "" : hashText(source);
+      } else {
+        v = values[f.name]?.trim() ?? "";
+      }
       payload[f.name] = v === "" ? null : v;
     }
     mutation.mutate({ templateId, actAs, payload });
