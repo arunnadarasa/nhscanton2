@@ -162,7 +162,7 @@ function ExecutionLog() {
           No events yet
         </div>
       )}
-      <ul className="space-y-2 max-h-[320px] overflow-y-auto">
+      <ul className="space-y-2 max-h-[60vh] overflow-y-auto md:max-h-[320px]">
         {events.map((ev) => (
           <li
             key={ev.id}
