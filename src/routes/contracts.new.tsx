@@ -100,8 +100,8 @@ function CreateContractPage() {
                           }`}
                         >
                           <div className="flex w-full items-center justify-between gap-2">
-                            <div className="font-semibold text-sm">{t.label}</div>
-                            <Badge variant="outline" className="text-[10px]">
+                            <div className="min-w-0 flex-1 truncate font-semibold text-sm">{t.label}</div>
+                            <Badge variant="outline" className="shrink-0 text-[10px]">
                               {t.fields.length} fields
                             </Badge>
                           </div>
@@ -110,7 +110,7 @@ function CreateContractPage() {
                               {t.description}
                             </div>
                           )}
-                          <div className="mt-1 text-[10px] font-mono text-muted-foreground/80">
+                          <div className="mt-1 w-full truncate text-[10px] font-mono text-muted-foreground/80">
                             {t.module}:{t.label}
                           </div>
                         </button>
@@ -120,15 +120,16 @@ function CreateContractPage() {
                 );
               })}
             </div>
-          </div>
+            </div>
+          </details>
 
           {/* Form */}
-          <div className="rounded-2xl border border-border bg-white/60 p-5 shadow-soft backdrop-blur">
+          <div className="order-1 rounded-2xl border border-border bg-white/60 p-5 shadow-soft backdrop-blur md:order-none">
             <CreateContractForm templateId={templateId} />
           </div>
 
           {/* Execution log + active contracts */}
-          <div className="space-y-5">
+          <div className="order-3 space-y-5 md:order-none">
             <ExecutionLog />
             <ActiveContractsPanel templateId={templateId} />
           </div>
@@ -137,6 +138,7 @@ function CreateContractPage() {
     </AppShell>
   );
 }
+
 
 function ExecutionLog() {
   const fetchEvents = useServerFn(listContractEvents);
