@@ -138,31 +138,35 @@ export function CreateContractForm({ templateId }: Props) {
             actAs <span className="text-muted-foreground">(Parties)</span>
           </Label>
         </div>
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-white p-2">
-          {actAs.length === 0 && (
-            <span className="px-1 text-xs text-muted-foreground">No parties — add one</span>
-          )}
-          {actAs.map((p) => {
-            const known = knownParties.find((kp) => kp.party_id === p || kp.logical_name === p);
-            return (
-              <span
-                key={p}
-                className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
-              >
-                {known ? known.logical_name : shortParty(p)}
-                <button
-                  type="button"
-                  onClick={() => removeParty(p)}
-                  className="ml-0.5 grid h-4 w-4 place-items-center rounded bg-rose-500/15 text-rose-600 hover:bg-rose-500/25"
-                  aria-label={`Remove ${p}`}
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 rounded-lg border border-border bg-white p-2 sm:flex sm:flex-wrap sm:items-center">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {actAs.length === 0 && (
+              <span className="px-1 text-xs text-muted-foreground">No parties — add one</span>
+            )}
+            {actAs.map((p) => {
+              const known = knownParties.find((kp) => kp.party_id === p || kp.logical_name === p);
+              return (
+                <span
+                  key={p}
+                  className="inline-flex max-w-full items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            );
-          })}
+                  <span className="truncate max-w-[10rem]">
+                    {known ? known.logical_name : shortParty(p)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeParty(p)}
+                    className="ml-0.5 grid h-4 w-4 shrink-0 place-items-center rounded bg-rose-500/15 text-rose-600 hover:bg-rose-500/25"
+                    aria-label={`Remove ${p}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              );
+            })}
+          </div>
           <Select onValueChange={addParty} value="">
-            <SelectTrigger className="ml-auto h-8 w-auto gap-1 border-dashed text-xs">
+            <SelectTrigger className="h-8 w-auto shrink-0 gap-1 border-dashed text-xs sm:ml-auto">
               <Plus className="h-3 w-3" />
               <span>Add Party</span>
             </SelectTrigger>
@@ -192,13 +196,13 @@ export function CreateContractForm({ templateId }: Props) {
           return (
             <div key={f.name} className="space-y-1.5">
               <Label className="flex items-center gap-2 text-sm">
-                <span className="font-semibold">{f.name}</span>
+                <span className="min-w-0 truncate font-semibold">{f.name}</span>
                 {!f.required && (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
                     optional
                   </span>
                 )}
-                <Badge variant="outline" className={`ml-auto ${badge.cls}`}>
+                <Badge variant="outline" className={`ml-auto shrink-0 ${badge.cls}`}>
                   {badge.label}
                 </Badge>
               </Label>
@@ -226,7 +230,7 @@ export function CreateContractForm({ templateId }: Props) {
                   </SelectContent>
                 </Select>
               ) : f.kind === "hash" ? (
-                <div className="rounded-md border border-dashed border-violet-500/40 bg-violet-500/5 px-3 py-2 font-mono text-xs text-violet-800">
+                <div className="break-all rounded-md border border-dashed border-violet-500/40 bg-violet-500/5 px-3 py-2 font-mono text-[10px] text-violet-800 md:text-xs">
                   {(() => {
                     const source = f.derivedFrom ? values[f.derivedFrom]?.trim() : "";
                     if (!source) {
@@ -273,9 +277,11 @@ export function CreateContractForm({ templateId }: Props) {
         </div>
       )}
       {mutation.isSuccess && mutation.data && (
-        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700">
-          Created on <span className="font-semibold">{mutation.data.network}</span>:{" "}
-          <span className="font-mono">{mutation.data.contractId.slice(0, 16)}…</span>
+        <div className="space-y-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700">
+          <div>
+            Created on <span className="font-semibold">{mutation.data.network}</span>
+          </div>
+          <div className="break-all font-mono text-[11px]">{mutation.data.contractId}</div>
         </div>
       )}
     </form>
