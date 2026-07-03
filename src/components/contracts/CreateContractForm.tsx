@@ -119,14 +119,14 @@ export function CreateContractForm({ templateId }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+      <div className="min-w-0 rounded-xl border border-border bg-white p-4 shadow-sm">
         <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Template
         </div>
-        <div className="font-display text-lg font-bold tracking-tight text-foreground">
+        <div className="font-display text-lg font-bold tracking-tight text-foreground break-words">
           {tpl.label}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground break-all">
           {tpl.module}:{tpl.label}
         </div>
       </div>
