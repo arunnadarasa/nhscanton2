@@ -235,7 +235,7 @@ function ActiveContractsPanel({ templateId }: { templateId: TemplateId }) {
           No active contracts found for this template
         </div>
       ) : (
-        <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+        <ul className="space-y-2 max-h-[60vh] overflow-y-auto md:max-h-[300px]">
           {contracts.map((c) => {
             const payload = c.payload as Record<string, unknown>;
             const amount = payload.amountGbp as string | undefined;
