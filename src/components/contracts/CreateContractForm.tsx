@@ -196,13 +196,13 @@ export function CreateContractForm({ templateId }: Props) {
           return (
             <div key={f.name} className="space-y-1.5">
               <Label className="flex items-center gap-2 text-sm">
-                <span className="font-semibold">{f.name}</span>
+                <span className="min-w-0 truncate font-semibold">{f.name}</span>
                 {!f.required && (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
                     optional
                   </span>
                 )}
-                <Badge variant="outline" className={`ml-auto ${badge.cls}`}>
+                <Badge variant="outline" className={`ml-auto shrink-0 ${badge.cls}`}>
                   {badge.label}
                 </Badge>
               </Label>
