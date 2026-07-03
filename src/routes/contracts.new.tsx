@@ -124,9 +124,12 @@ function CreateContractPage() {
           </details>
 
           {/* Form */}
-          <div className="order-1 rounded-2xl border border-border bg-white/60 p-5 shadow-soft backdrop-blur md:order-none">
+          <div className="order-1 min-w-0 rounded-2xl border border-border bg-white/60 p-5 shadow-soft backdrop-blur md:order-none">
             <CreateContractForm templateId={templateId} />
           </div>
+
+          {/* Execution log + active contracts */}
+          <div className="order-3 min-w-0 space-y-5 md:order-none">
 
           {/* Execution log + active contracts */}
           <div className="order-3 space-y-5 md:order-none">
