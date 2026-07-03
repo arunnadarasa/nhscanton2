@@ -53,21 +53,28 @@ function CreateContractPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 md:py-10">
-        <div className="mb-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6 md:py-10">
+        <div className="mb-4 md:mb-6">
           <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Create Contract
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-[13px] text-muted-foreground md:text-sm">
             Submit a Daml contract to the active Canton ledger. Equivalent to Seaport's
             Create-Contract flow.
           </p>
         </div>
 
         <div className="grid gap-5 md:grid-cols-[260px_minmax(0,1fr)_320px]">
-          {/* Templates */}
-          <div className="space-y-3">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {/* Templates — collapsible on mobile, sidebar on desktop */}
+          <details className="group order-2 rounded-xl border border-border bg-white/60 p-3 md:order-none md:contents md:rounded-none md:border-0 md:bg-transparent md:p-0" open>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 md:hidden">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Templates ({TEMPLATE_LIST.length}) — {TEMPLATES[templateId].label}
+              </span>
+              <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">▾</span>
+            </summary>
+            <div className="mt-3 space-y-3 md:mt-0 md:space-y-3">
+            <div className="hidden text-xs font-semibold uppercase tracking-wider text-muted-foreground md:block">
               Templates ({TEMPLATE_LIST.length})
             </div>
             <div className="space-y-5">
