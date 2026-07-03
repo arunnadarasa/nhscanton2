@@ -119,14 +119,14 @@ export function CreateContractForm({ templateId }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+      <div className="min-w-0 rounded-xl border border-border bg-white p-4 shadow-sm">
         <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Template
         </div>
-        <div className="font-display text-lg font-bold tracking-tight text-foreground">
+        <div className="font-display text-lg font-bold tracking-tight text-foreground break-words">
           {tpl.label}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground break-all">
           {tpl.module}:{tpl.label}
         </div>
       </div>
@@ -194,15 +194,15 @@ export function CreateContractForm({ templateId }: Props) {
         {tpl.fields.map((f) => {
           const badge = KIND_BADGE[f.kind];
           return (
-            <div key={f.name} className="space-y-1.5">
-              <Label className="flex items-center gap-2 text-sm">
-                <span className="min-w-0 truncate font-semibold">{f.name}</span>
+            <div key={f.name} className="min-w-0 space-y-1.5">
+              <Label className="flex min-w-0 items-center gap-2 text-sm">
+                <span className="min-w-0 flex-1 truncate font-semibold">{f.name}</span>
                 {!f.required && (
                   <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
                     optional
                   </span>
                 )}
-                <Badge variant="outline" className={`ml-auto shrink-0 ${badge.cls}`}>
+                <Badge variant="outline" className={`shrink-0 ${badge.cls}`}>
                   {badge.label}
                 </Badge>
               </Label>

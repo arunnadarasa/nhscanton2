@@ -64,7 +64,7 @@ function CreateContractPage() {
           </p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-[260px_minmax(0,1fr)_320px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[260px_minmax(0,1fr)_320px]">
           {/* Templates — collapsible on mobile, sidebar on desktop */}
           <details className="group order-2 rounded-xl border border-border bg-white/60 p-3 md:order-none md:contents md:rounded-none md:border-0 md:bg-transparent md:p-0" open>
             <summary className="flex cursor-pointer list-none items-center justify-between gap-2 md:hidden">
@@ -124,12 +124,12 @@ function CreateContractPage() {
           </details>
 
           {/* Form */}
-          <div className="order-1 rounded-2xl border border-border bg-white/60 p-5 shadow-soft backdrop-blur md:order-none">
+          <div className="order-1 min-w-0 rounded-2xl border border-border bg-white/60 p-5 shadow-soft backdrop-blur md:order-none">
             <CreateContractForm templateId={templateId} />
           </div>
 
           {/* Execution log + active contracts */}
-          <div className="order-3 space-y-5 md:order-none">
+          <div className="order-3 min-w-0 space-y-5 md:order-none">
             <ExecutionLog />
             <ActiveContractsPanel templateId={templateId} />
           </div>

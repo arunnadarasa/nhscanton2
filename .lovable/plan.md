@@ -1,42 +1,26 @@
-# Improve mobile UX
+## Problem
 
-Scope: presentation-only. No business logic, no server functions, no schema changes.
+On mobile (384px), the Create Contract form panel overflows the viewport to the right. Visible symptoms in the screenshot:
 
-## Problems visible in the screenshot (/contracts/new at 384px)
+- Template header subtitle `NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy` runs off the right edge
+- Field-kind badges are clipped (`Part…`, `Tex…`)
+- The form card's right border is cut off the screen
 
-1. Template cards clip badge text ("6 fiel…") — badge is `shrink-0` but card row uses plain flex without `min-w-0` on the title, so the badge is pushed off-screen instead of the title truncating.
-2. The 3-column grid `md:grid-cols-[260px_minmax(0,1fr)_320px]` stacks correctly on mobile, but the template list renders 10 full-height cards before the form — user must scroll past everything to reach the form. Needs a collapsed picker on mobile.
-3. Page title/description use desktop sizing; hero block eats a full viewport height on 384px.
-4. Execution Log + Active Contracts panels sit at the very bottom on mobile; fine, but their `max-h-[320px]` inner scrolls trap touch scroll. Should relax on mobile.
-5. `CreateContractForm` "Add Party" trigger uses `ml-auto` inside a wrapping flex — on narrow widths it jumps to its own line unpredictably. Row of party chips + trigger needs a stable mobile layout.
-6. Hash-field preview line (`hash(amountGbp) = …`) is a single long mono string with no wrap → horizontal scroll on mobile.
-7. Success toast shows full contract id inline (`font-mono`), also overflows.
+Root cause: the parent grid `md:grid-cols-[260px_minmax(0,1fr)_320px]` has no explicit mobile track, so it defaults to `grid-cols-1` — but the form panel's children (long mono strings, non-wrapping subtitle) force intrinsic width larger than the viewport because the grid track has no `minmax(0, …)` clamp on mobile either. Combined with `break-all` missing on the template subtitle, the panel expands.
 
-## Changes
+## Fix (UI only, mobile only)
 
 ### `src/routes/contracts.new.tsx`
-- Wrap the template list in a mobile-only `<details>` (native disclosure) that shows the currently-selected template as the summary and collapses the other 9 cards. On `md:` keep the always-open sidebar.
-- Reduce hero: `text-2xl md:text-3xl` stays, but tighten top/bottom padding on mobile (`py-4 md:py-10`) and clamp description to 2 lines with `text-[13px] md:text-sm`.
-- Inside each template card row: wrap title in `min-w-0 flex-1` and add `truncate` so the field-count badge stays visible.
-- Relax panel scroll caps on mobile: `max-h-[60vh] md:max-h-[320px]`.
-- Grid: keep 3-col on `md:`, but on mobile reorder to Form → Templates disclosure → Log/Active, so the primary action is above the fold.
+- Add explicit `grid-cols-[minmax(0,1fr)]` on mobile so the single column can shrink: `grid gap-5 grid-cols-[minmax(0,1fr)] md:grid-cols-[260px_minmax(0,1fr)_320px]`
+- Add `min-w-0` to the form panel wrapper (`order-1 … min-w-0`) and the Execution Log / Active Contracts wrapper so their contents can shrink
 
 ### `src/components/contracts/CreateContractForm.tsx`
-- actAs row: switch outer wrapper to `grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:flex-wrap` so chips wrap in the left cell and "Add Party" stays pinned right. Add `min-w-0` on chip container.
-- Chip label: wrap in `truncate max-w-[10rem]` so long party ids don't push the ✕ off-screen.
-- Hash preview box: add `break-all` and drop to `text-[10px] md:text-xs`.
-- Success banner: render contract id on its own line with `break-all font-mono`.
-- Field label row: badge uses `ml-auto shrink-0`; add `min-w-0` on the name span with `truncate` for long field names.
+- Template header card: add `min-w-0` to the card, `truncate` (or `break-all` for the mono subtitle) to `{tpl.module}:{tpl.label}` line, and `break-words` to the label
+- Field label row (`<Label>`): wrap in a `min-w-0` container; the name span already has `truncate` but the row is a flex — ensure the flex parent has `min-w-0 flex-1` so the badge on the right stays inside the panel instead of being pushed off
+- actAs container: already grid, but add `min-w-0` to be safe
 
-### `src/routes/index.tsx` (light touch, mobile only)
-- The FAQ section added earlier: ensure question triggers use `text-left` and `min-w-0` so long questions wrap instead of pushing the chevron. Confirm the hero chip strip (`dl`) wraps to a 2-col grid on mobile (`grid-cols-2 sm:flex`).
+### Verification
+- `tsgo --noEmit`
+- Playwright screenshot at 384×800 confirming: no horizontal scroll, template subtitle wraps or truncates within card, `Party`/`Text`/`Numeric`/`Commitment` badges fully visible on the right of each field label
 
-## Out of scope
-- No changes to templates registry, server functions, Daml, or routing.
-- No new components or dependencies.
-- Desktop layout unchanged except where a class also applies at `md:` (verified per-change).
-
-## Verification
-- `tsgo --noEmit`.
-- Playwright at 384×800: screenshot `/contracts/new` before/after; confirm no horizontal scroll, badge visible, form reachable within one screen of scroll.
-- Playwright at 1280×1800: confirm desktop layout unchanged.
+No changes to desktop layout, business logic, routing, or server functions.
