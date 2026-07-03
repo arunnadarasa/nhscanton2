@@ -277,9 +277,11 @@ export function CreateContractForm({ templateId }: Props) {
         </div>
       )}
       {mutation.isSuccess && mutation.data && (
-        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700">
-          Created on <span className="font-semibold">{mutation.data.network}</span>:{" "}
-          <span className="font-mono">{mutation.data.contractId.slice(0, 16)}…</span>
+        <div className="space-y-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700">
+          <div>
+            Created on <span className="font-semibold">{mutation.data.network}</span>
+          </div>
+          <div className="break-all font-mono text-[11px]">{mutation.data.contractId}</div>
         </div>
       )}
     </form>
