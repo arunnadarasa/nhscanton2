@@ -130,9 +130,6 @@ function CreateContractPage() {
 
           {/* Execution log + active contracts */}
           <div className="order-3 min-w-0 space-y-5 md:order-none">
-
-          {/* Execution log + active contracts */}
-          <div className="order-3 space-y-5 md:order-none">
             <ExecutionLog />
             <ActiveContractsPanel templateId={templateId} />
           </div>
