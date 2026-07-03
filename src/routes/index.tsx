@@ -592,9 +592,9 @@ function FaqSection() {
               className="border-border/60 px-4 last:border-b-0 md:px-6"
             >
               <AccordionTrigger className="py-5 text-left font-display text-base font-semibold text-foreground hover:no-underline hover:text-primary md:text-lg">
-                <span className="flex items-center gap-3">
-                  <HelpCircle className="h-4 w-4 shrink-0 text-accent" />
-                  {f.q}
+                <span className="flex min-w-0 items-start gap-3">
+                  <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                  <span className="min-w-0 flex-1">{f.q}</span>
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-5 pl-7 pr-2 text-sm leading-relaxed text-muted-foreground md:text-[15px]">
