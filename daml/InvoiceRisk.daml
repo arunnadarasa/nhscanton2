@@ -14,10 +14,10 @@ template InvoiceRisk
       do
         invoice <- fetch invoiceCid
 
-        pure
-          (if invoice.amountGbp >= 50000.0 then
-                "High Risk Invoice"
-           else if invoice.amountGbp >= 10000.0 then
-                "Medium Risk Invoice"
-           else
-                "Low Risk Invoice")
+        pure $
+          if invoice.requiresManualApproval then
+            "High Risk Invoice"
+          else if invoice.supplierVerified then
+            "Low Risk Invoice"
+          else
+            "Medium Risk Invoice"
