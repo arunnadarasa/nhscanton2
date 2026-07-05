@@ -1,0 +1,22 @@
+module InvoiceAnalytics where
+
+import NhsTokenisedBudgetAllocation
+
+template InvoiceAnalytics
+  with
+    invoiceCid : ContractId Invoice
+    analyst : Party
+  where
+    signatory analyst
+
+    nonconsuming choice AnalyseInvoice : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+        let total = invoice.amountGbp + vat
+
+        pure
+          ("Invoice Total = £"
+            <> show total)
