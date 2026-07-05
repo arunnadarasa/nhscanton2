@@ -86,7 +86,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:SpendCommitmentPrivacy": {
     id: "NhsTokenisedBudgetAllocation:SpendCommitmentPrivacy",
-    label: "SpendCommitmentPrivacy",
+    label: "NHS:SpendCommitmentPrivacy",
     module: "NhsTokenisedBudgetAllocation",
     category: "privacy",
     defaultActAs: "Trust-GSTT",
