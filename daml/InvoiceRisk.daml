@@ -1,0 +1,23 @@
+module InvoiceRisk where
+
+import NhsTokenisedBudgetAllocation
+
+template InvoiceRisk
+  with
+    invoiceCid : ContractId Invoice
+    auditor : Party
+  where
+    signatory auditor
+
+    nonconsuming choice CalculateRisk : Text
+      controller auditor
+      do
+        invoice <- fetch invoiceCid
+
+        pure
+          (if invoice.amountGbp >= 50000.0 then
+                "High Risk Invoice"
+           else if invoice.amountGbp >= 10000.0 then
+                "Medium Risk Invoice"
+           else
+                "Low Risk Invoice")
