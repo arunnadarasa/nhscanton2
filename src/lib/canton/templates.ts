@@ -153,7 +153,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Tokenisation ────────────────────────────────────────────
   "NhsTokenisedBudgetAllocation:TokenisationRequest": {
     id: "NhsTokenisedBudgetAllocation:TokenisationRequest",
-    label: "TokenisationRequest",
+    label: "NhsTokenisedBudgetAllocation -> TokenisationRequest",
     module: "NhsTokenisedBudgetAllocation",
     category: "tokenisation",
     defaultActAs: "DHSC",
