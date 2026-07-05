@@ -64,7 +64,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Privacy flow ─────────────────────────────────────────────
   "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy": {
     id: "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy",
-    label: "BudgetAllocationPrivacy",
+    label: "NHS:BudgetAllocationPrivacy",
     module: "NhsTokenisedBudgetAllocation",
     category: "privacy",
     defaultActAs: "DHSC",
