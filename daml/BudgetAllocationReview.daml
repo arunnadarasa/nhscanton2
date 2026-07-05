@@ -1,0 +1,23 @@
+module BudgetAllocationReview where
+
+import NhsTokenisedBudgetAllocation
+
+template BudgetAllocationReview
+  with
+    allocationCid : ContractId BudgetAllocation
+    reviewer : Party
+  where
+    signatory reviewer
+
+    nonconsuming choice ReviewAllocation : Text
+      controller reviewer
+      do
+        allocation <- fetch allocationCid
+
+        pure $
+          if allocation.amountGbp <= 0.0 then
+            "Invalid budget allocation"
+          else if allocation.purpose == "" then
+            "Budget allocated without a defined purpose"
+          else
+            "Budget allocation ready for distribution"
