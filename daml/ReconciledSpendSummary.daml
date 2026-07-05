@@ -1,0 +1,29 @@
+module ReconciledSpendSummary where
+
+import NhsTokenisedBudgetAllocation
+import DA.Optional
+
+-- ============================================================
+-- RECONCILED SPEND SUMMARY
+-- ============================================================
+
+summaryReport : ReconciledSpendPrivacy -> Text
+summaryReport rs =
+  let
+    settlementProgress =
+      if isSome rs.settlementTxId then 100 else 0
+
+    supplierRecorded =
+      if isSome rs.supplier then "Yes" else "No"
+
+    commitmentRecorded =
+      if isSome rs.supplierCommit then "Yes" else "No"
+  in
+    "========== Reconciled Spend Summary ==========\n" <>
+    "Category              : " <> rs.category <> "\n" <>
+    "Period                : " <> rs.period <> "\n" <>
+    "Amount (GBP)          : " <> show rs.amountGbp <> "\n" <>
+    "Supplier Recorded     : " <> supplierRecorded <> "\n" <>
+    "Supplier Commitment   : " <> commitmentRecorded <> "\n" <>
+    "Settlement Progress   : " <> show settlementProgress <> "%\n" <>
+    "============================================="
