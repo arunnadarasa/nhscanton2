@@ -168,7 +168,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:NhsFundingToken": {
     id: "NhsTokenisedBudgetAllocation:NhsFundingToken",
-    label: "NhsFundingToken",
+    label: "NhsTokenisedBudgetAllocation -> NhsFundingToken",
     module: "NhsTokenisedBudgetAllocation",
     category: "tokenisation",
     defaultActAs: "DHSC",
