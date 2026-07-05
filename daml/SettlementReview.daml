@@ -1,0 +1,22 @@
+module SettlementReview where
+
+import NhsTokenisedBudgetAllocation
+
+template SettlementReview
+  with
+    settlementCid : ContractId PrivateSettlement
+    reviewer : Party
+  where
+    signatory reviewer
+
+    nonconsuming choice ReviewSettlement : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+            None ->
+                pure "Settlement awaiting reference"
+
+            Some _ ->
+                pure "Settlement ready for audit"
