@@ -190,7 +190,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:TokenRedemption": {
     id: "NhsTokenisedBudgetAllocation:TokenRedemption",
-    label: "TokenRedemption",
+    label: "NhsTokenisedBudgetAllocation -> TokenRedemption",
     module: "NhsTokenisedBudgetAllocation",
     category: "tokenisation",
     defaultActAs: "Trust-GSTT",
