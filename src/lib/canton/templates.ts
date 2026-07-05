@@ -206,7 +206,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Proofs & private settlement ─────────────────────────────
   "NhsTokenisedBudgetAllocation:PrivateSettlement": {
     id: "NhsTokenisedBudgetAllocation:PrivateSettlement",
-    label: "PrivateSettlement",
+    label: "NhsTokenisedBudgetAllocation -> PrivateSettlement",
     module: "NhsTokenisedBudgetAllocation",
     category: "proofs",
     defaultActAs: "Trust-GSTT",
