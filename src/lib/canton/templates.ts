@@ -153,7 +153,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Tokenisation ────────────────────────────────────────────
   "NhsTokenisedBudgetAllocation:TokenisationRequest": {
     id: "NhsTokenisedBudgetAllocation:TokenisationRequest",
-    label: "NhsTokenisedBudgetAllocation -> TokenisationRequest",
+    label: "NhsTokenisedBudgetAllocation:TokenisationRequest",
     module: "NhsTokenisedBudgetAllocation",
     category: "tokenisation",
     defaultActAs: "DHSC",
@@ -168,7 +168,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:NhsFundingToken": {
     id: "NhsTokenisedBudgetAllocation:NhsFundingToken",
-    label: "NhsTokenisedBudgetAllocation -> NhsFundingToken",
+    label: "NhsTokenisedBudgetAllocation:NhsFundingToken",
     module: "NhsTokenisedBudgetAllocation",
     category: "tokenisation",
     defaultActAs: "DHSC",
@@ -190,7 +190,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:TokenRedemption": {
     id: "NhsTokenisedBudgetAllocation:TokenRedemption",
-    label: "NhsTokenisedBudgetAllocation -> TokenRedemption",
+    label: "NhsTokenisedBudgetAllocation:TokenRedemption",
     module: "NhsTokenisedBudgetAllocation",
     category: "tokenisation",
     defaultActAs: "Trust-GSTT",
@@ -206,7 +206,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Proofs & private settlement ─────────────────────────────
   "NhsTokenisedBudgetAllocation:PrivateSettlement": {
     id: "NhsTokenisedBudgetAllocation:PrivateSettlement",
-    label: "NhsTokenisedBudgetAllocation -> PrivateSettlement",
+    label: "NhsTokenisedBudgetAllocation:PrivateSettlement",
     module: "NhsTokenisedBudgetAllocation",
     category: "proofs",
     defaultActAs: "Trust-GSTT",
@@ -223,7 +223,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:ProofOfAmount": {
     id: "NhsTokenisedBudgetAllocation:ProofOfAmount",
-    label: "NhsTokenisedBudgetAllocation -> ProofOfAmount",
+    label: "NhsTokenisedBudgetAllocation:ProofOfAmount",
     module: "NhsTokenisedBudgetAllocation",
     category: "proofs",
     defaultActAs: "Auditor",
@@ -237,7 +237,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:ProofOfSupplier": {
     id: "NhsTokenisedBudgetAllocation:ProofOfSupplier",
-    label: "ProofOfSupplier",
+    label: "NhsTokenisedBudgetAllocation:ProofOfSupplier",
     module: "NhsTokenisedBudgetAllocation",
     category: "proofs",
     defaultActAs: "Auditor",
