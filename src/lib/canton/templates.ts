@@ -223,7 +223,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:ProofOfAmount": {
     id: "NhsTokenisedBudgetAllocation:ProofOfAmount",
-    label: "ProofOfAmount",
+    label: "NhsTokenisedBudgetAllocation -> ProofOfAmount",
     module: "NhsTokenisedBudgetAllocation",
     category: "proofs",
     defaultActAs: "Auditor",
