@@ -1,0 +1,21 @@
+module CommitmentInspector where
+
+import NhsTokenisedBudgetAllocation
+
+template CommitmentInspector
+  with
+    commitmentCid : ContractId SpendCommitmentPrivacy
+    auditor : Party
+  where
+    signatory auditor
+
+    nonconsuming choice InspectCommitment : Text
+      controller auditor
+      do
+        commitment <- fetch commitmentCid
+
+        pure $
+          if hashText (show commitment.amountGbp) == commitment.amountCommit then
+              "Commitment integrity confirmed"
+          else
+              "Commitment integrity failed"
