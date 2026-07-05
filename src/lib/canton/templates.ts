@@ -64,7 +64,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Privacy flow ─────────────────────────────────────────────
   "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy": {
     id: "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy",
-    label: "BudgetAllocationPrivacy",
+    label: "NHS:BudgetAllocationPrivacy",
     module: "NhsTokenisedBudgetAllocation",
     category: "privacy",
     defaultActAs: "DHSC",
@@ -86,7 +86,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:SpendCommitmentPrivacy": {
     id: "NhsTokenisedBudgetAllocation:SpendCommitmentPrivacy",
-    label: "SpendCommitmentPrivacy",
+    label: "NHS:SpendCommitmentPrivacy",
     module: "NhsTokenisedBudgetAllocation",
     category: "privacy",
     defaultActAs: "Trust-GSTT",
@@ -119,7 +119,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:ReconciledSpendPrivacy": {
     id: "NhsTokenisedBudgetAllocation:ReconciledSpendPrivacy",
-    label: "ReconciledSpendPrivacy",
+    label: "NHS:ReconciledSpendPrivacy",
     module: "NhsTokenisedBudgetAllocation",
     category: "privacy",
     defaultActAs: "Trust-GSTT",
