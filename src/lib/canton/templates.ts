@@ -30,7 +30,12 @@ export interface TemplateField {
   derivedFrom?: string;
 }
 
-export type TemplateCategory = "privacy" | "tokenisation" | "proofs" | "invoice" | "reviews";
+export type TemplateCategory =
+  | "budget-allocation"
+  | "spend-commitment"
+  | "reconciled-spend"
+  | "settlement"
+  | "invoice";
 
 export interface TemplateDef {
   id: TemplateId;
