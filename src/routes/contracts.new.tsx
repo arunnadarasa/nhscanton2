@@ -21,11 +21,11 @@ import {
 } from "@/lib/canton/templates";
 
 const CATEGORY_LABEL: Record<TemplateCategory, string> = {
-  privacy: "Privacy flow",
-  tokenisation: "Tokenisation",
-  proofs: "Proofs & settlement",
+  "budget-allocation": "NHS Budget Allocation",
+  "spend-commitment": "Spend Commitment",
+  "reconciled-spend": "Reconciled Spend",
+  settlement: "Settlement",
   invoice: "Invoice",
-  reviews: "Reviews & analytics",
 };
 
 export const Route = createFileRoute("/contracts/new")({
