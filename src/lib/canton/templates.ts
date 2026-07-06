@@ -77,7 +77,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy",
     label: "NHS:BudgetAllocationPrivacy",
     module: "NhsTokenisedBudgetAllocation",
-    category: "privacy",
+    category: "budget-allocation",
     defaultActAs: "DHSC",
     description: "Privacy-enhanced allocation with a hashed purpose commitment.",
     fields: [
@@ -99,7 +99,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:SpendCommitmentPrivacy",
     label: "NHS:SpendCommitmentPrivacy",
     module: "NhsTokenisedBudgetAllocation",
-    category: "privacy",
+    category: "spend-commitment",
     defaultActAs: "Trust-GSTT",
     description: "Trust spend line with hashed amount + optional supplier commitment.",
     fields: [
@@ -132,7 +132,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:ReconciledSpendPrivacy",
     label: "NHS:ReconciledSpendPrivacy",
     module: "NhsTokenisedBudgetAllocation",
-    category: "privacy",
+    category: "reconciled-spend",
     defaultActAs: "Trust-GSTT",
     description: "Countersigned spend disclosed to the auditor, with amount commitment.",
     fields: [
@@ -166,7 +166,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:TokenisationRequest",
     label: "NHS:BudgetAllocation:TokenisationRequest",
     module: "NhsTokenisedBudgetAllocation",
-    category: "tokenisation",
+    category: "budget-allocation",
     defaultActAs: "DHSC",
     description: "Allocator-signed request that can be minted into an NhsFundingToken.",
     fields: [
@@ -181,7 +181,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:NhsFundingToken",
     label: "NHS:BudgetAllocation:NhsFundingToken",
     module: "NhsTokenisedBudgetAllocation",
-    category: "tokenisation",
+    category: "budget-allocation",
     defaultActAs: "DHSC",
     description: "Fungible NHS funding token co-signed by issuer + owner.",
     fields: [
@@ -203,7 +203,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:TokenRedemption",
     label: "NHS:BudgetAllocation:TokenRedemption",
     module: "NhsTokenisedBudgetAllocation",
-    category: "tokenisation",
+    category: "budget-allocation",
     defaultActAs: "Trust-GSTT",
     description: "Owner-initiated redemption of an NHS funding token back to the issuer.",
     fields: [
@@ -219,7 +219,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:PrivateSettlement",
     label: "NHS:BudgetAllocation:PrivateSettlement",
     module: "NhsTokenisedBudgetAllocation",
-    category: "proofs",
+    category: "settlement",
     defaultActAs: "Trust-GSTT",
     description: "Trust + commissioner settlement record with hashed amount + purpose.",
     fields: [
@@ -236,7 +236,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:ProofOfAmount",
     label: "NHS:BudgetAllocation:ProofOfAmount",
     module: "NhsTokenisedBudgetAllocation",
-    category: "proofs",
+    category: "settlement",
     defaultActAs: "Auditor",
     description: "Zero-knowledge-style proof that an amount matches a commitment.",
     fields: [
@@ -250,7 +250,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "NhsTokenisedBudgetAllocation:ProofOfSupplier",
     label: "NHS:BudgetAllocation:ProofOfSupplier",
     module: "NhsTokenisedBudgetAllocation",
-    category: "proofs",
+    category: "settlement",
     defaultActAs: "Auditor",
     description: "Proof that a supplier identity matches a commitment.",
     fields: [
@@ -286,7 +286,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "BudgetAllocationReview:BudgetAllocationReview",
     label: "BudgetAllocationReview:BudgetAllocationReview",
     module: "BudgetAllocationReview",
-    category: "reviews",
+    category: "budget-allocation",
     defaultActAs: "Auditor",
     description: "Reviewer inspects a BudgetAllocation contract for validity.",
     fields: [
@@ -298,7 +298,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "CommitmentInspector:CommitmentInspector",
     label: "CommitmentInspector:CommitmentInspector",
     module: "CommitmentInspector",
-    category: "reviews",
+    category: "spend-commitment",
     defaultActAs: "Auditor",
     description: "Auditor verifies the integrity of a SpendCommitmentPrivacy commitment.",
     fields: [
@@ -310,7 +310,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "InvoiceAnalytics:InvoiceAnalytics",
     label: "InvoiceAnalytics:InvoiceAnalytics",
     module: "InvoiceAnalytics",
-    category: "reviews",
+    category: "invoice",
     defaultActAs: "Auditor",
     description: "Analyst computes VAT and invoice total from an Invoice contract.",
     fields: [
@@ -322,7 +322,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "InvoiceRisk:InvoiceRisk",
     label: "InvoiceRisk:InvoiceRisk",
     module: "InvoiceRisk",
-    category: "reviews",
+    category: "invoice",
     defaultActAs: "Auditor",
     description: "Auditor classifies an Invoice as low / medium / high risk.",
     fields: [
@@ -334,7 +334,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
     id: "SettlementReview:SettlementReview",
     label: "SettlementReview:SettlementReview",
     module: "SettlementReview",
-    category: "reviews",
+    category: "settlement",
     defaultActAs: "Auditor",
     description: "Reviewer checks a PrivateSettlement is ready for audit.",
     fields: [
