@@ -349,11 +349,11 @@ export const TEMPLATE_LIST: TemplateDef[] = Object.values(TEMPLATES);
 export const TEMPLATE_IDS = Object.keys(TEMPLATES) as [TemplateId, ...TemplateId[]];
 
 export const TEMPLATES_BY_CATEGORY: Record<TemplateCategory, TemplateDef[]> = {
-  privacy: TEMPLATE_LIST.filter((t) => t.category === "privacy"),
-  tokenisation: TEMPLATE_LIST.filter((t) => t.category === "tokenisation"),
-  proofs: TEMPLATE_LIST.filter((t) => t.category === "proofs"),
+  "budget-allocation": TEMPLATE_LIST.filter((t) => t.category === "budget-allocation"),
+  "spend-commitment": TEMPLATE_LIST.filter((t) => t.category === "spend-commitment"),
+  "reconciled-spend": TEMPLATE_LIST.filter((t) => t.category === "reconciled-spend"),
+  settlement: TEMPLATE_LIST.filter((t) => t.category === "settlement"),
   invoice: TEMPLATE_LIST.filter((t) => t.category === "invoice"),
-  reviews: TEMPLATE_LIST.filter((t) => t.category === "reviews"),
 };
 
 export function optionalFieldNames(id: TemplateId): Set<string> {
