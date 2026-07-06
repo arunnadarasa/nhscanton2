@@ -25,6 +25,7 @@ const CATEGORY_LABEL: Record<TemplateCategory, string> = {
   tokenisation: "Tokenisation",
   proofs: "Proofs & settlement",
   invoice: "Invoice",
+  reviews: "Reviews & analytics",
 };
 
 export const Route = createFileRoute("/contracts/new")({
