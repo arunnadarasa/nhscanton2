@@ -22,7 +22,13 @@ export type TemplateName =
   // Proofs & private settlement
   | "NhsTokenisedBudgetAllocation:PrivateSettlement"
   | "NhsTokenisedBudgetAllocation:ProofOfAmount"
-  | "NhsTokenisedBudgetAllocation:ProofOfSupplier";
+  | "NhsTokenisedBudgetAllocation:ProofOfSupplier"
+  // Reviews & analytics
+  | "BudgetAllocationReview:BudgetAllocationReview"
+  | "CommitmentInspector:CommitmentInspector"
+  | "InvoiceAnalytics:InvoiceAnalytics"
+  | "InvoiceRisk:InvoiceRisk"
+  | "SettlementReview:SettlementReview";
 
 export interface BudgetAllocation {
   allocator: Party;

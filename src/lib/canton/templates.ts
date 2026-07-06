@@ -30,7 +30,7 @@ export interface TemplateField {
   derivedFrom?: string;
 }
 
-export type TemplateCategory = "privacy" | "tokenisation" | "proofs" | "invoice";
+export type TemplateCategory = "privacy" | "tokenisation" | "proofs" | "invoice" | "reviews";
 
 export interface TemplateDef {
   id: TemplateId;
@@ -58,7 +58,13 @@ export type TemplateId =
   | "NhsTokenisedBudgetAllocation:ProofOfAmount"
   | "NhsTokenisedBudgetAllocation:ProofOfSupplier"
   // Parallel invoice workflow (Nhs module — unchanged)
-  | "Nhs:Invoice";
+  | "Nhs:Invoice"
+  // Reviews & analytics (nonconsuming choices over existing contracts)
+  | "BudgetAllocationReview:BudgetAllocationReview"
+  | "CommitmentInspector:CommitmentInspector"
+  | "InvoiceAnalytics:InvoiceAnalytics"
+  | "InvoiceRisk:InvoiceRisk"
+  | "SettlementReview:SettlementReview";
 
 export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Privacy flow ─────────────────────────────────────────────
@@ -269,6 +275,68 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
       { name: "supplier", kind: "party", required: false, optional: true },
     ],
   },
+
+  // ── Reviews & analytics ─────────────────────────────────────
+  "BudgetAllocationReview:BudgetAllocationReview": {
+    id: "BudgetAllocationReview:BudgetAllocationReview",
+    label: "BudgetAllocationReview:BudgetAllocationReview",
+    module: "BudgetAllocationReview",
+    category: "reviews",
+    defaultActAs: "Auditor",
+    description: "Reviewer inspects a BudgetAllocation contract for validity.",
+    fields: [
+      { name: "allocationCid", kind: "text", required: true, placeholder: "cid-…", help: "ContractId of the BudgetAllocation to review." },
+      { name: "reviewer", kind: "party", required: true },
+    ],
+  },
+  "CommitmentInspector:CommitmentInspector": {
+    id: "CommitmentInspector:CommitmentInspector",
+    label: "CommitmentInspector:CommitmentInspector",
+    module: "CommitmentInspector",
+    category: "reviews",
+    defaultActAs: "Auditor",
+    description: "Auditor verifies the integrity of a SpendCommitmentPrivacy commitment.",
+    fields: [
+      { name: "commitmentCid", kind: "text", required: true, placeholder: "cid-…", help: "ContractId of the SpendCommitmentPrivacy." },
+      { name: "auditor", kind: "party", required: true },
+    ],
+  },
+  "InvoiceAnalytics:InvoiceAnalytics": {
+    id: "InvoiceAnalytics:InvoiceAnalytics",
+    label: "InvoiceAnalytics:InvoiceAnalytics",
+    module: "InvoiceAnalytics",
+    category: "reviews",
+    defaultActAs: "Auditor",
+    description: "Analyst computes VAT and invoice total from an Invoice contract.",
+    fields: [
+      { name: "invoiceCid", kind: "text", required: true, placeholder: "cid-…", help: "ContractId of the Invoice." },
+      { name: "analyst", kind: "party", required: true },
+    ],
+  },
+  "InvoiceRisk:InvoiceRisk": {
+    id: "InvoiceRisk:InvoiceRisk",
+    label: "InvoiceRisk:InvoiceRisk",
+    module: "InvoiceRisk",
+    category: "reviews",
+    defaultActAs: "Auditor",
+    description: "Auditor classifies an Invoice as low / medium / high risk.",
+    fields: [
+      { name: "invoiceCid", kind: "text", required: true, placeholder: "cid-…", help: "ContractId of the Invoice." },
+      { name: "auditor", kind: "party", required: true },
+    ],
+  },
+  "SettlementReview:SettlementReview": {
+    id: "SettlementReview:SettlementReview",
+    label: "SettlementReview:SettlementReview",
+    module: "SettlementReview",
+    category: "reviews",
+    defaultActAs: "Auditor",
+    description: "Reviewer checks a PrivateSettlement is ready for audit.",
+    fields: [
+      { name: "settlementCid", kind: "text", required: true, placeholder: "cid-…", help: "ContractId of the PrivateSettlement." },
+      { name: "reviewer", kind: "party", required: true },
+    ],
+  },
 };
 
 export const TEMPLATE_LIST: TemplateDef[] = Object.values(TEMPLATES);
@@ -280,6 +348,7 @@ export const TEMPLATES_BY_CATEGORY: Record<TemplateCategory, TemplateDef[]> = {
   tokenisation: TEMPLATE_LIST.filter((t) => t.category === "tokenisation"),
   proofs: TEMPLATE_LIST.filter((t) => t.category === "proofs"),
   invoice: TEMPLATE_LIST.filter((t) => t.category === "invoice"),
+  reviews: TEMPLATE_LIST.filter((t) => t.category === "reviews"),
 };
 
 export function optionalFieldNames(id: TemplateId): Set<string> {
