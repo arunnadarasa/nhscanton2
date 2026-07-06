@@ -217,7 +217,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Proofs & private settlement ─────────────────────────────
   "NhsTokenisedBudgetAllocation:PrivateSettlement": {
     id: "NhsTokenisedBudgetAllocation:PrivateSettlement",
-    label: "NHS:BudgetAllocation:PrivateSettlement",
+    label: "NHS:Settlement:PrivateSettlement",
     module: "NhsTokenisedBudgetAllocation",
     category: "settlement",
     defaultActAs: "Trust-GSTT",
@@ -234,7 +234,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:ProofOfAmount": {
     id: "NhsTokenisedBudgetAllocation:ProofOfAmount",
-    label: "NHS:BudgetAllocation:ProofOfAmount",
+    label: "NHS:Settlement:ProofOfAmount",
     module: "NhsTokenisedBudgetAllocation",
     category: "settlement",
     defaultActAs: "Auditor",
@@ -248,7 +248,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   },
   "NhsTokenisedBudgetAllocation:ProofOfSupplier": {
     id: "NhsTokenisedBudgetAllocation:ProofOfSupplier",
-    label: "NHS:BudgetAllocation:ProofOfSupplier",
+    label: "NHS:Settlement:ProofOfSupplier",
     module: "NhsTokenisedBudgetAllocation",
     category: "settlement",
     defaultActAs: "Auditor",
