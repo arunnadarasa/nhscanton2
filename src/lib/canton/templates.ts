@@ -58,7 +58,13 @@ export type TemplateId =
   | "NhsTokenisedBudgetAllocation:ProofOfAmount"
   | "NhsTokenisedBudgetAllocation:ProofOfSupplier"
   // Parallel invoice workflow (Nhs module — unchanged)
-  | "Nhs:Invoice";
+  | "Nhs:Invoice"
+  // Reviews & analytics (nonconsuming choices over existing contracts)
+  | "BudgetAllocationReview:BudgetAllocationReview"
+  | "CommitmentInspector:CommitmentInspector"
+  | "InvoiceAnalytics:InvoiceAnalytics"
+  | "InvoiceRisk:InvoiceRisk"
+  | "SettlementReview:SettlementReview";
 
 export const TEMPLATES: Record<TemplateId, TemplateDef> = {
   // ── Privacy flow ─────────────────────────────────────────────
