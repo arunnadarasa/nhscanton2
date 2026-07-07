@@ -214,11 +214,9 @@ Represents a spending commitment made by an NHS Trust before approval and reconc
 | amountGbp | Decimal | Amount committed (£) |
 | period | Text | Reporting period |
 | supplierName | Optional Text | Supplier label (human-readable; not an on-chain party) |
-| paymentAmount | Optional Decimal | Settlement amount |
+| paymentAmount | Optional Decimal | Settlement amount | 
 | amountCommit | Commitment | Stores the commitment details for the requested budget amount |
-| supplierCommit | Optional Commitment | 
-| settlementCid | ContractId PrivateSettlement |
-| reviewer | Party | 
+| commitmentCid | Text | Stores Commitment ID
 
 ----
 
@@ -235,6 +233,8 @@ Allows the commissioner to review and approve the spending commitment.
 ### Data model
 
 | Field | Type | Description |
+|---------|---------|-------------|
+
 | CountersignPrivacy | ContractId ReconciledSpendPrivacy | Countersigns the reconciled spend and creates a ReconciledSpendPrivacy contract. 
 | commissioner | trust, commissioner, auditor, category, amountGbp, amountCommit, period, supplier, supplierCommit, settlementTxId | Used to populate the fields of the newly created ReconciledSpendPrivacy contract.
 
