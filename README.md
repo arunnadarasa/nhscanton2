@@ -172,6 +172,7 @@ Tracks the allocation of NHS funding between healthcare organizations, enabling 
 | fiscalYear | Text | Financial year of allocation |
 | amountGbp | Decimal | Budget allocated (£) |
 | purpose | Text | Purpose of the allocation |
+| purposeHash | Commitment | Pupose hash |
 
 ### Choice: SubAllocate
 
@@ -182,6 +183,7 @@ Allows a recipient to distribute part of its allocated budget to another organiz
 | toParty | Party | Recipient of the sub-allocation |
 | amount | Decimal | Amount to allocate |
 | subPurpose | Text | Purpose of the allocation |
+| subPurposeHash | Commitment | Commitment hash corresponding to the sub-purpose
 
 ### Business Rules
 - Allocation amount must be greater than zero.
