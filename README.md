@@ -258,8 +258,10 @@ Represents approved and reconciled expenditure following commissioner review.
 | auditor | Party | Auditor |
 | category | Text | Spending category |
 | amountGbp | Decimal | Approved expenditure (£) |
+| amountCommit | Commitment | Approved expenditure (£) hash |
 | period | Text | Reporting period |
-| supplierName | Optional Text | Supplier label (carried through from SpendCommitment / Invoice) |
+| supplier | Party | Supplier |
+| supplierCommit | Commitment | Supplier hash |
 | settlementTxId | Optional Text | Settlement transaction reference |
 
 ### Purpose
@@ -269,6 +271,26 @@ Represents approved and reconciled expenditure following commissioner review.
 
 ---
 
+### Settlement
+
+| Field | Type | Description |
+|---------|---------|-------------|
+| trust | Party | Budget recipient trust |
+| commissioner | Party | Budget issuing authority |
+| auditor | Party | Allocation audit party |
+| tokenId | Text | Budget token identifier |
+| amountCommit | Commitment | Committed budget amount |
+| purposeCommit | Commitment | Committed budget purpose |
+| settlementRef | Text | Settlement reference ID |
+| commitmentCid | Text | Commitment contract ID |
+| preImage | Text | Original committed value |
+| hashValue | Commitment | Derived commitment hash |
+| verifier | Party | Commitment verifier |
+| settlementCid | Text | Settlement contract ID |
+| reviewer | Party | Settlement review party |
+
+
+---
 ## Invoice
 
 Supplier-facing parallel to `SpendCommitment` — a Trust raises an invoice
