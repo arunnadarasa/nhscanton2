@@ -277,11 +277,11 @@ The Settlement record is used to finalize, verify, and approve a committed budge
 
 ### Visibility
 
-Trust
-Commissioner
-Auditor
-Verifier
-Reviewer
+- Trust
+- Commissioner
+- Auditor
+- Verifier
+- Reviewer
 
 | Field | Type | Description |
 |---------|---------|-------------|
