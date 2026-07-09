@@ -273,6 +273,16 @@ Represents approved and reconciled expenditure following commissioner review.
 
 ### Settlement
 
+The Settlement record is used to finalize, verify, and approve a committed budget
+
+### Visibility
+
+Trust
+Commissioner
+Auditor
+Verifier
+Reviewer
+
 | Field | Type | Description |
 |---------|---------|-------------|
 | trust | Party | Budget recipient trust |
