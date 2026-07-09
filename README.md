@@ -1,8 +1,7 @@
 # NHS Ledger on Canton Network
 
-A privacy-enabled healthcare budget allocation + reconciliation app built for
-the Canton Foundation hackathon (Track 2: TradeFi, RWA & Tokenized Assets —
-NHS budget allocations as tokenized public-money flows).
+A privacy-enabled healthcare NHS budget allocation + reconciliation app with tokenized public-money flows built for
+the Canton Foundation hackathon (Track 1: Private DeFi & Capital Markets, Track 2:  TradeFi, RWA & Tokenized Assets)
 
 Targets **Canton 3.4 + JSON Ledger API v2**.
 
