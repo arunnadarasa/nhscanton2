@@ -63,10 +63,11 @@ const TRACKS: {
       "A use case where tokenization or on-chain coordination genuinely helps",
     ],
     howWeHit:
-      "The £192bn DHSC settlement is the real-world asset. DHSC → NHS England → ICB → Trust allocations are modelled as tokenized obligations; countersigning a SpendCommitment atomically archives it and mints a ReconciledSpend. Cross-ICB netting and Trust-level sub-allocations are exactly the enterprise workflow on tokenized RWAs the brief asks for — just applied to public money instead of capital markets.",
+      "The £192bn DHSC settlement is the real-world asset. DHSC → NHS England → ICB → Trust allocations are modelled as tokenized obligations; countersigning a SpendCommitment atomically archives it and mints a ReconciledSpend. Beyond the core workflow, the app also tokenises allocations into NHS funding tokens (TokenisationRequest → NhsFundingToken → TokenRedemption) and records private settlements. Cross-ICB netting and Trust-level sub-allocations are exactly the enterprise workflow on tokenized RWAs the brief asks for — just applied to public money instead of capital markets.",
     links: [
       { label: "/allocations", to: "/allocations" },
       { label: "/trust/GSTT", to: "/trust/GSTT" },
+      { label: "/contracts/new", to: "/contracts/new" },
     ],
   },
   {
@@ -83,10 +84,11 @@ const TRACKS: {
       "Credible relevance to institutional or professional markets",
     ],
     howWeHit:
-      "Public-money privacy is the same primitive as capital-markets privacy. An ICB sees only its envelope and its Trusts' sub-allocations; peer ICBs see nothing; the National Audit Office sees only co-signed ReconciledSpend contracts. Disclosure is enforced at the Daml template level via signatories and observers, not by application code.",
+      "Public-money privacy is the same primitive as capital-markets privacy. An ICB sees only its envelope and its Trusts' sub-allocations; peer ICBs see nothing; the National Audit Office sees only co-signed ReconciledSpend contracts. The privacy flow adds hashed commitments (purpose, amount, supplier) that an auditor can verify without learning the pre-image up front. Disclosure and proof are enforced at the Daml template level via signatories, observers, and nonconsuming verify choices, not by application code.",
     links: [
       { label: "/icb/LDN", to: "/icb/LDN" },
       { label: "/audit", to: "/audit" },
+      { label: "/contracts/new", to: "/contracts/new" },
     ],
   },
   {
@@ -118,10 +120,11 @@ const CRITERIA: {
     title: "Technical execution",
     icon: Cpu,
     how:
-      "Five Daml templates with signatories, observers and controller choices. Talks Canton 3.4 JSON Ledger API v2 directly via fetch — no EOL @daml/ledger v1 sidecar. Tri-mode adapter (Seaport-managed Devnet via OIDC, self-hosted Fly.io participant, in-memory simulator) with a header pill toggle. Four documented deployment paths: Seaport Devnet (recommended, provisioned via Encode Hackathon), LocalNet, Docker, and Fly.io.",
+      "15+ Daml templates across the NHS allocation, tokenisation, proof, settlement, and audit modules (NhsTokenisedBudgetAllocation, Nhs, BudgetAllocationReview, CommitmentInspector, InvoiceAnalytics, InvoiceRisk, SettlementReview, and MockUsdcx). The curated workflow pages talk to Canton 3.4 JSON Ledger API v2 directly via fetch, and a generic /contracts/new form can create any registered template. Tri-mode adapter (Seaport-managed Devnet via OIDC, self-hosted Fly.io participant, in-memory simulator) with a header pill toggle. Four documented deployment paths: Seaport Devnet (recommended, provisioned via Encode Hackathon), LocalNet, Docker, and Fly.io — the latter is supported but paused as the default.",
     evidence: [
       { label: "/deploy", to: "/deploy" },
       { label: "/ledger", to: "/ledger" },
+      { label: "/contracts/new", to: "/contracts/new" },
     ],
   },
   {
