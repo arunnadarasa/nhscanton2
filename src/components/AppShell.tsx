@@ -234,7 +234,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-            <div className="hidden md:block">
+            <div className="hidden md:flex md:items-center md:gap-2">
+              <Link
+                to="/contracts/new"
+                className="rounded-lg border border-border bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition hover:bg-secondary hover:text-primary"
+              >
+                Create contract
+              </Link>
+              <Link
+                to="/deploy"
+                className="rounded-lg bg-primary px-3.5 py-1.5 text-[12px] font-semibold text-primary-foreground shadow-glow transition hover:opacity-90"
+              >
+                Deploy
+              </Link>
+              <div className="mx-1 h-6 w-px bg-border" />
               <NetworkToggle
                 current={currentAlias}
                 available={available}
@@ -247,6 +260,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }}
               />
             </div>
+
 
             {email ? (
               <button
