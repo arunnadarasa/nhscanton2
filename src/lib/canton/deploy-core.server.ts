@@ -488,21 +488,20 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       if (read) readSet.add(read);
       if (act) actSet.add(act);
     }
-    const missingReadAs: string[] = [];
     const missingActAs: string[] = [];
     for (const a of allocs) {
       if (!a.partyId) continue;
-      if (!readSet.has(a.partyId)) missingReadAs.push(a.hint);
-      if (!actSet.has(a.partyId)) {
-        missingActAs.push(a.hint);
-      }
+      // CanActAs subsumes CanReadAs — only require ActAs for each party.
+      if (!actSet.has(a.partyId)) missingActAs.push(a.hint);
     }
     rightsVerify = {
-      ok: lr.ok && missingReadAs.length === 0 && missingActAs.length === 0,
+      ok: lr.ok && missingActAs.length === 0,
       listed: (lj.rights ?? []).length,
-      missingReadAs,
+      missingReadAs: [],
       missingActAs,
     };
+    void readSet;
+
     if (!rightsVerify.ok) {
       return Response.json(
         { mode, step: "verify-rights", rightsVerify, rightsResult, allocs },
