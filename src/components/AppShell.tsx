@@ -44,6 +44,39 @@ const NAV_LINKS = [
   { to: "/deck", label: "Pitch deck" },
 ] as const;
 
+type NavGroupItem = { to: string; label: string; description?: string };
+const NAV_GROUPS: Array<{ label: string; width: string; items: NavGroupItem[] }> = [
+  {
+    label: "Cockpits",
+    width: "w-64",
+    items: [
+      { to: "/allocations", label: "Allocations", description: "Budget distribution across ICBs" },
+      { to: "/icb/LDN", label: "ICB cockpit", description: "Integrated Care Board operations" },
+      { to: "/trust/GSTT", label: "Trust view", description: "Provider and facility performance" },
+    ],
+  },
+  {
+    label: "Ledger",
+    width: "w-72",
+    items: [
+      { to: "/ledger", label: "Ledger", description: "Immutable transaction record" },
+      { to: "/audit", label: "Audit", description: "Compliance & governance stream" },
+      { to: "/contracts/new", label: "Create contract", description: "Submit a new Daml contract" },
+    ],
+  },
+  {
+    label: "About",
+    width: "w-64",
+    items: [
+      { to: "/canton-vs-evm", label: "Why Canton" },
+      { to: "/how-it-works", label: "How it's built" },
+      { to: "/deploy", label: "Deploy" },
+      { to: "/hackathon", label: "Hackathon" },
+      { to: "/deck", label: "Pitch deck" },
+    ],
+  },
+];
+
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: mode } = useSuspenseQuery(ledgerModeQuery);
