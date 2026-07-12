@@ -157,7 +157,7 @@ const SUBMISSION: { label: string; done: boolean; note: string; to?: string; hre
     label: "Public repository",
     done: true,
     note: "Daml templates, server functions, and deploy docs all in-tree.",
-    href: "https://github.com/",
+    href: "https://github.com/arunnadarasa/nhscanton2",
   },
   {
     label: "Link to live product",
