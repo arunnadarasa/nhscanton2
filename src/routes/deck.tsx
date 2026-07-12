@@ -259,8 +259,10 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
               { to: "/allocations", label: "1. Allocations" },
               { to: "/icb/LDN", label: "2. ICB cockpit" },
               { to: "/trust/GSTT", label: "3. Trust view" },
-              { to: "/audit", label: "4. Audit trail" },
+              { to: "/contracts/new", label: "4. Create contract" },
+              { to: "/audit", label: "5. Audit trail" },
             ].map((l) => (
+
               <Link
                 key={l.to}
                 to={l.to}
