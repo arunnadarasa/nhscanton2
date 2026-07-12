@@ -317,12 +317,46 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     );
   }
 
+  // Pre-fetch existing rights so we only POST what's missing. Canton caps the
+  // number of rights per user (TOO_MANY_USER_RIGHTS at ~1000) and repeated
+  // deploys accumulate duplicates when the party fingerprint drifts, so a
+  // naive "grant everything every time" eventually hits the cap.
+  const existingReadAs = new Set<string>();
+  const existingActAs = new Set<string>();
+  try {
+    const lr = await fetch(`${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`, {
+      headers: auth,
+    });
+    if (lr.ok) {
+      const lj = (await lr.json().catch(() => ({}))) as {
+        rights?: Array<{
+          kind?: {
+            CanActAs?: { value?: { party?: string } };
+            CanReadAs?: { value?: { party?: string } };
+          };
+        }>;
+      };
+      for (const r of lj.rights ?? []) {
+        const read = r.kind?.CanReadAs?.value?.party;
+        const act = r.kind?.CanActAs?.value?.party;
+        if (read) existingReadAs.add(read);
+        if (act) existingActAs.add(act);
+      }
+    }
+  } catch {
+    // If listing fails, fall through and try to grant — worst case we hit
+    // the same TOO_MANY_USER_RIGHTS surfaced below.
+  }
+
   const rights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
   for (const a of allocs) {
     if (!a.partyId) continue;
-    rights.push({ kind: { CanReadAs: { value: { party: a.partyId } } } });
-    // Auditor needs CanActAs too so it can mint mock-USDCx (issuer = Auditor).
-    rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
+    if (!existingReadAs.has(a.partyId)) {
+      rights.push({ kind: { CanReadAs: { value: { party: a.partyId } } } });
+    }
+    if (!existingActAs.has(a.partyId)) {
+      rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
+    }
   }
 
   let rightsResult: unknown = "skipped";
@@ -333,14 +367,17 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       body: JSON.stringify({ userId, identityProviderId: "", rights }),
     });
     const rb = await r.text();
-    rightsResult = { status: r.status, ok: r.ok, body: rb.slice(0, 800) };
+    rightsResult = { status: r.status, ok: r.ok, granted: rights.length, body: rb.slice(0, 800) };
     if (!r.ok && r.status !== 409) {
       return Response.json(
-        { mode, step: "grant-rights", status: r.status, body: rb.slice(0, 800), allocs },
+        { mode, step: "grant-rights", status: r.status, granted: rights.length, body: rb.slice(0, 800), allocs },
         { status: 502 },
       );
     }
+  } else {
+    rightsResult = { status: 200, ok: true, granted: 0, note: "all rights already present" };
   }
+
 
   let verify: { ok: boolean; status?: number; body?: string; error?: string };
   try {
