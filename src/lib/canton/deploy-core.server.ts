@@ -318,16 +318,23 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
   }
 
   // Canton caps the number of rights per user (TOO_MANY_USER_RIGHTS at ~1000).
-  // Repeated deploys with different party fingerprints accumulate stale rights,
-  // so before granting we (a) list existing rights, (b) revoke any that point
-  // at a party ID NOT in the current allocs (stale fingerprint / removed
-  // party), and (c) POST only the rights that are actually missing.
+  // On Seaport the runtime user is SHARED across all tenants that use the
+  // same OIDC client (validator user "6" typically), so we must be surgical:
+  //   (a) list existing rights,
+  //   (b) revoke only rights that reference an OUR-namespaced party hint
+  //       with a STALE fingerprint (leftover from prior deploys) — never
+  //       touch rights belonging to other tenants,
+  //   (c) POST only the rights actually missing for the current allocs.
+  // Revocation uses PATCH /v2/users/{id}/rights per Canton JSON API 3.4
+  // OpenAPI (RevokeUserRightsRequest); POST /rights is grant-only.
   const currentPartyIds = new Set(
     allocs.filter((a) => a.partyId).map((a) => a.partyId!),
   );
+  const ourHintPrefixes = new Set(parties); // "DHSC", "NHSEngland", "ICB-NEY", ...
   const existingReadAs = new Set<string>();
   const existingActAs = new Set<string>();
   const staleRights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
+  let totalRightsSeen = 0;
   try {
     const lr = await fetch(`${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`, {
       headers: auth,
@@ -341,16 +348,26 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
           };
         }>;
       };
+      const isOurStale = (partyId: string) => {
+        if (currentPartyIds.has(partyId)) return false;
+        const idx = partyId.indexOf("::");
+        if (idx <= 0) return false;
+        const hint = partyId.slice(0, idx);
+        return ourHintPrefixes.has(hint);
+      };
       for (const r of lj.rights ?? []) {
+        totalRightsSeen++;
         const read = r.kind?.CanReadAs?.value?.party;
         const act = r.kind?.CanActAs?.value?.party;
         if (read) {
           if (currentPartyIds.has(read)) existingReadAs.add(read);
-          else staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
+          else if (isOurStale(read))
+            staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
         }
         if (act) {
           if (currentPartyIds.has(act)) existingActAs.add(act);
-          else staleRights.push({ kind: { CanActAs: { value: { party: act } } } });
+          else if (isOurStale(act))
+            staleRights.push({ kind: { CanActAs: { value: { party: act } } } });
         }
       }
     }
@@ -360,16 +377,14 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
 
   let revokeResult: unknown = "skipped";
   if (staleRights.length > 0) {
-    // Chunk revocations — Canton's revoke endpoint accepts arrays but very
-    // large payloads can time out on Devnet.
     let revoked = 0;
     let lastErr: { status: number; body: string } | undefined;
     for (let i = 0; i < staleRights.length; i += 100) {
       const chunk = staleRights.slice(i, i + 100);
       const rv = await fetch(
-        `${adminBase}/v2/users/${encodeURIComponent(userId)}/rights/revoke`,
+        `${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: { ...auth, "Content-Type": "application/json" },
           body: JSON.stringify({ userId, identityProviderId: "", rights: chunk }),
         },
@@ -382,8 +397,11 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
         break;
       }
     }
-    revokeResult = { revoked, total: staleRights.length, lastErr };
+    revokeResult = { revoked, total: staleRights.length, lastErr, totalRightsSeen };
+  } else {
+    revokeResult = { revoked: 0, total: 0, totalRightsSeen };
   }
+
 
   const rights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
   for (const a of allocs) {
