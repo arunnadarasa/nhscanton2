@@ -161,6 +161,7 @@ Tracks the allocation of NHS funding between healthcare organizations, enabling 
 ### Visibility
 - Allocator
 - Recipient
+- reviewer
 
 ### Data Model
 
@@ -201,6 +202,7 @@ Represents a spending commitment made by an NHS Trust before approval and reconc
 ### Visibility
 - Trust
 - Commissioner (ICB)
+- auditor
 
 ### Data Model
 
@@ -306,8 +308,9 @@ Supplier-facing parallel to `SpendCommitment` — a Trust raises an invoice
 record that the commissioner countersigns into a `ReconciledSpend`.
 
 ### Visibility
-- Trust (signatory)
-- Commissioner (observer)
+- Trust 
+- Commissioner
+- auditor
 
 ### Data Model
 
