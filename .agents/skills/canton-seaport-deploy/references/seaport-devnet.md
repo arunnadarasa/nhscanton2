@@ -103,7 +103,31 @@ curl -X POST https://nhscanton2.lovable.app/api/public/admin/self-deploy \
   -H "content-type: application/json" -d '{}'
 ```
 
+## Shared runtime user hits `TOO_MANY_USER_RIGHTS`
+
+On Seaport, the OIDC runtime client is often shared across every tenant of a sponsor (the JWT `sub` is a small integer like `"6"`, primary party `5nsandbox-devnet-2::…`, annotation `otc-canton-fund-oauth`). Canton caps user rights at 1000, and each tenant's deploys pile on. Once you hit the cap, `POST /v2/users/{id}/rights` returns:
+
+```json
+{ "code": "TOO_MANY_USER_RIGHTS", "cause": "grant user rights failed, as user \"6\" would have too many rights." }
+```
+
+Symptom in-app: step N-1 works (its rights were granted before the cap), step N returns the opaque `403 security-sensitive` because the missing party's `CanActAs` never landed.
+
+Bootstrap must be surgical on a shared user:
+
+1. **List existing rights** and only POST what's missing.
+2. **Revoke stale rights** for your own hint namespace (party hint matches, fingerprint doesn't) via `PATCH /v2/users/{id}/rights` — the actual JSON API 3.4 endpoint. `POST /rights/revoke` returns 404 on the current validator.
+3. **Grant only `CanActAs`.** `CanActAs` subsumes `CanReadAs` in Daml semantics, so granting both doubles your footprint on the shared user for zero benefit. Revoke any redundant `CanReadAs` you find on your current fingerprint.
+4. **Never touch other tenants' rights** — the guard is "party hint prefix ∈ our known hint set".
+5. **`DELETE /v2/users/{id}`** doesn't help — the request errors `Requesting user cannot delete itself`.
+
+Verify with `missingActAs` only, not `missingReadAs`.
+
 ## Mock-USDCx mint pattern
+
+For demos that need fungible balances without going through real xReserve USDCx:
+
+
 
 For demos that need fungible balances without going through real xReserve USDCx:
 

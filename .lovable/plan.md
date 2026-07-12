@@ -1,32 +1,28 @@
-Update the active `canton-fly-deploy` skill so future agents inherit the lessons from this NHS Canton project. Draft under `.agents/skills/canton-fly-deploy/` then apply via `skills--apply_draft`.
+## What we know
 
-## Edits to `SKILL.md`
+- The UI error on step 2 (NHSEngland → ICB) is Canton's "security-sensitive 403", which means the runtime OIDC token's `sub` doesn't match a ledger user that holds `CanActAs` for NHSEngland.
+- The code path is already correct:
+  - `getRuntimeLedgerUserId()` derives the ledger user id from the runtime JWT's `sub` (or `applicationId`).
+  - `runDeploy()` uses that id for `POST /v2/users` and grants `CanActAs` + `CanReadAs` for every party (DHSC, NHSEngland, Auditor, all ICBs, all Trusts).
+  - Bootstrap and runtime tokens share the same client on this project (no separate `BOOTSTRAP_CLIENT_ID`), so `sub` is consistent between admin ops and command submission.
+- Step 1 (DHSC) succeeded, which proves the token can act — so the mismatch is party-specific, not global. Either the last Deploy predates the fix, or NHSEngland's grant was skipped/rolled back for some reason.
 
-1. **Reinforce Devnet-first framing** in the intro paragraph and the "Pick your path" table caption. Keep the skill name (`canton-fly-deploy`) — renaming would break the existing retrieval slug.
-2. **Add a 5th invariant** to the "Four invariants" block (rename to "Five invariants"):
-   > **SHA-256 commitment parity.** If your Daml template stores commitments (`hashText <fields>`), the on-ledger `hashText` and the frontend pre-image hash MUST produce identical bytes. Use `import DA.Text (sha256)` + `hashText t = sha256 t` in Daml, and a real SHA-256 in TS (Web Crypto `crypto.subtle.digest("SHA-256", ...)` or an inline FIPS 180-4 impl). Identity hashes ("just return the text") silently work locally then fail audit-time reconciliation.
-3. **Add a new "App architecture" section** (short, above "Don't repeat these") pointing to three new reference files:
-   - `references/mode-runtime.md` — the `memory | localnet | devnet` runtime switcher (`src/lib/canton/mode.server.ts`), per-request cookie override, persisted execution log, memory-mode fallback for offline demos.
-   - `references/create-contract-ui.md` — the generic Create-Contract pattern: a `templates.ts` registry describes every template (id, package, module, entity, fields with hashing hints), driving one dynamic form at `/contracts/new` that calls a single `createCommand` server function.
-   - `references/commitment-hashing.md` — SHA-256 parity between Daml `hashText` and the frontend, including the "encode as UTF-8 → hex-lowercase" convention and a test recipe (round-trip a sample string in both languages, assert equal).
-4. **Expand the "When to read which reference" table** with rows for the three new files.
-5. **Add three new "Don't repeat these" bullets** (grouped under a new **App integration** subsection):
-   - Don't ship an identity `hashText` — Daml and TS must both SHA-256 the same UTF-8 bytes.
-   - Don't scatter template-specific create forms across routes — use one registry-driven form.
-   - Don't hardcode the ledger network — read a per-request `canton_network` cookie, fall back to `CANTON_MODE`, and always keep `memory` mode as an offline demo path.
+I can't run Deploy from plan mode (need `DEPLOY_ADMIN_TOKEN`, which is encrypted; the tool call returns 401 without it).
 
-## New reference files (concise, ~40-80 lines each)
+## Plan
 
-- `references/commitment-hashing.md` — Daml snippet, TS snippet (Web Crypto preferred, inline fallback for edge runtimes without subtle), parity-test recipe, common divergences (utf-8 vs utf-16, hex casing, trimming).
-- `references/create-contract-ui.md` — template registry shape, dynamic form generation, `hashedFrom` field pointer, single `createCommand` server function, why grouping templates by domain (Budget Allocation / Spend Commitment / Reconciled Spend / Settlement / Invoice) beats grouping by tech concern.
-- `references/mode-runtime.md` — `getLedgerMode()` server fn, `setCantonNetwork` mutation, `canton_network` cookie precedence over `CANTON_MODE`, memory-mode implementation notes, persisted execution log for demo replay.
+1. **You click Deploy** at `/deploy` → "Initialize live ledger". This re-mints the runtime token, re-creates the user under its `sub`, and re-grants `CanActAs`/`CanReadAs` on every party (idempotent — safe to run repeatedly).
+2. When it finishes, paste (or screenshot) the JSON response. I specifically want:
+   - `allocs` — every hint should have a `partyId`, none should have `error`.
+   - `rightsResult` — status should be 200/OK.
+   - `rightsVerify` — `missingActAs` and `missingReadAs` must both be empty; `listed` should equal 2× the party count.
+3. Then retry step 2 (NHSEngland → ICB::NEY).
 
-## Hand-off
+## If step 2 still 403s after a clean Deploy
 
-After writing the draft under `.agents/skills/canton-fly-deploy/`, call `skills--apply_draft` with path `.agents/skills/canton-fly-deploy` so the workspace skill updates.
+I'll switch to build mode and:
+- Add server-side logging inside `submitAndWait` to record `{ userId, actAs, resolvedActAs }` and dump the response body verbatim on 403 (currently we only surface Canton's opaque `cause`).
+- Add a `/api/public/admin/whoami` diagnostic route that returns `{ runtimeUserId, tokenSub, rights: [...] }` from the participant so we can confirm the live rights table matches what `runDeploy` claims to have granted.
+- Cross-check that `partyNhsE()` resolves to the same `NHSEngland::<fingerprint>` that appears in the rights list (in case an older allocation with a different fingerprint is being reused from `canton_parties`).
 
-## Out of scope
-
-- No changes to the existing 7 reference files.
-- No skill rename.
-- No changes to the project's own code.
+No code changes proposed yet — Deploy first, then decide.

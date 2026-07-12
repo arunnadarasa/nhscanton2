@@ -317,13 +317,106 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     );
   }
 
+  // Canton caps the number of rights per user (TOO_MANY_USER_RIGHTS at ~1000).
+  // On Seaport the runtime user is SHARED across all tenants that use the
+  // same OIDC client (validator user "6" typically), so we must be surgical:
+  //   (a) list existing rights,
+  //   (b) revoke only rights that reference an OUR-namespaced party hint
+  //       with a STALE fingerprint (leftover from prior deploys) — never
+  //       touch rights belonging to other tenants,
+  //   (c) POST only the rights actually missing for the current allocs.
+  // Revocation uses PATCH /v2/users/{id}/rights per Canton JSON API 3.4
+  // OpenAPI (RevokeUserRightsRequest); POST /rights is grant-only.
+  const currentPartyIds = new Set(
+    allocs.filter((a) => a.partyId).map((a) => a.partyId!),
+  );
+  const ourHintPrefixes = new Set(parties); // "DHSC", "NHSEngland", "ICB-NEY", ...
+  const existingReadAs = new Set<string>();
+  const existingActAs = new Set<string>();
+  const staleRights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
+  let totalRightsSeen = 0;
+  try {
+    const lr = await fetch(`${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`, {
+      headers: auth,
+    });
+    if (lr.ok) {
+      const lj = (await lr.json().catch(() => ({}))) as {
+        rights?: Array<{
+          kind?: {
+            CanActAs?: { value?: { party?: string } };
+            CanReadAs?: { value?: { party?: string } };
+          };
+        }>;
+      };
+      const isOurStale = (partyId: string) => {
+        if (currentPartyIds.has(partyId)) return false;
+        const idx = partyId.indexOf("::");
+        if (idx <= 0) return false;
+        const hint = partyId.slice(0, idx);
+        return ourHintPrefixes.has(hint);
+      };
+      for (const r of lj.rights ?? []) {
+        totalRightsSeen++;
+        const read = r.kind?.CanReadAs?.value?.party;
+        const act = r.kind?.CanActAs?.value?.party;
+        if (read) {
+          if (currentPartyIds.has(read)) {
+            existingReadAs.add(read);
+            // CanActAs subsumes CanReadAs — this ReadAs on our current party
+            // is redundant, mark for revocation to free cap space.
+            staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
+          } else if (isOurStale(read)) {
+            staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
+          }
+        }
+        if (act) {
+          if (currentPartyIds.has(act)) existingActAs.add(act);
+          else if (isOurStale(act))
+            staleRights.push({ kind: { CanActAs: { value: { party: act } } } });
+        }
+      }
+    }
+  } catch {
+    // Fall through — worst case we hit TOO_MANY_USER_RIGHTS surfaced below.
+  }
+
+  let revokeResult: unknown = "skipped";
+  if (staleRights.length > 0) {
+    let revoked = 0;
+    let lastErr: { status: number; body: string } | undefined;
+    for (let i = 0; i < staleRights.length; i += 100) {
+      const chunk = staleRights.slice(i, i + 100);
+      const rv = await fetch(
+        `${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`,
+        {
+          method: "PATCH",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, identityProviderId: "", rights: chunk }),
+        },
+      );
+      const rb = await rv.text();
+      if (rv.ok) {
+        revoked += chunk.length;
+      } else {
+        lastErr = { status: rv.status, body: rb.slice(0, 400) };
+        break;
+      }
+    }
+    revokeResult = { revoked, total: staleRights.length, lastErr, totalRightsSeen };
+  } else {
+    revokeResult = { revoked: 0, total: 0, totalRightsSeen };
+  }
+
+  // Grant only CanActAs (subsumes CanReadAs) for parties still missing it.
+  // Keeps our footprint on the shared user at ~N instead of ~2N.
   const rights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
   for (const a of allocs) {
     if (!a.partyId) continue;
-    rights.push({ kind: { CanReadAs: { value: { party: a.partyId } } } });
-    // Auditor needs CanActAs too so it can mint mock-USDCx (issuer = Auditor).
-    rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
+    if (!existingActAs.has(a.partyId)) {
+      rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
+    }
   }
+
 
   let rightsResult: unknown = "skipped";
   if (rights.length > 0) {
@@ -333,14 +426,18 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       body: JSON.stringify({ userId, identityProviderId: "", rights }),
     });
     const rb = await r.text();
-    rightsResult = { status: r.status, ok: r.ok, body: rb.slice(0, 800) };
+    rightsResult = { status: r.status, ok: r.ok, granted: rights.length, body: rb.slice(0, 800) };
     if (!r.ok && r.status !== 409) {
       return Response.json(
-        { mode, step: "grant-rights", status: r.status, body: rb.slice(0, 800), allocs },
+        { mode, step: "grant-rights", status: r.status, granted: rights.length, revokeResult, body: rb.slice(0, 800), allocs },
         { status: 502 },
       );
     }
+  } else {
+    rightsResult = { status: 200, ok: true, granted: 0, note: "all rights already present" };
   }
+
+
 
   let verify: { ok: boolean; status?: number; body?: string; error?: string };
   try {
@@ -391,21 +488,20 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       if (read) readSet.add(read);
       if (act) actSet.add(act);
     }
-    const missingReadAs: string[] = [];
     const missingActAs: string[] = [];
     for (const a of allocs) {
       if (!a.partyId) continue;
-      if (!readSet.has(a.partyId)) missingReadAs.push(a.hint);
-      if (!actSet.has(a.partyId)) {
-        missingActAs.push(a.hint);
-      }
+      // CanActAs subsumes CanReadAs — only require ActAs for each party.
+      if (!actSet.has(a.partyId)) missingActAs.push(a.hint);
     }
     rightsVerify = {
-      ok: lr.ok && missingReadAs.length === 0 && missingActAs.length === 0,
+      ok: lr.ok && missingActAs.length === 0,
       listed: (lj.rights ?? []).length,
-      missingReadAs,
+      missingReadAs: [],
       missingActAs,
     };
+    void readSet;
+
     if (!rightsVerify.ok) {
       return Response.json(
         { mode, step: "verify-rights", rightsVerify, rightsResult, allocs },
