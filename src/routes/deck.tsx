@@ -138,7 +138,7 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
     render: () => (
       <Slide
         kicker="The problem"
-        title="£180B/yr moves through spreadsheets and email"
+        title="£192B/yr moves through spreadsheets and email"
         accent={<Building2 className="h-10 w-10 text-primary/70" />}
       >
         <ul className="space-y-5">
