@@ -360,9 +360,14 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
         const read = r.kind?.CanReadAs?.value?.party;
         const act = r.kind?.CanActAs?.value?.party;
         if (read) {
-          if (currentPartyIds.has(read)) existingReadAs.add(read);
-          else if (isOurStale(read))
+          if (currentPartyIds.has(read)) {
+            existingReadAs.add(read);
+            // CanActAs subsumes CanReadAs — this ReadAs on our current party
+            // is redundant, mark for revocation to free cap space.
             staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
+          } else if (isOurStale(read)) {
+            staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
+          }
         }
         if (act) {
           if (currentPartyIds.has(act)) existingActAs.add(act);
@@ -402,17 +407,16 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     revokeResult = { revoked: 0, total: 0, totalRightsSeen };
   }
 
-
+  // Grant only CanActAs (subsumes CanReadAs) for parties still missing it.
+  // Keeps our footprint on the shared user at ~N instead of ~2N.
   const rights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
   for (const a of allocs) {
     if (!a.partyId) continue;
-    if (!existingReadAs.has(a.partyId)) {
-      rights.push({ kind: { CanReadAs: { value: { party: a.partyId } } } });
-    }
     if (!existingActAs.has(a.partyId)) {
       rights.push({ kind: { CanActAs: { value: { party: a.partyId } } } });
     }
   }
+
 
   let rightsResult: unknown = "skipped";
   if (rights.length > 0) {
