@@ -212,21 +212,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </div>
 
-          <nav className="hidden items-center gap-1 text-sm font-medium md:flex">
-            {NAV_LINKS.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                className="rounded-lg px-2.5 py-1.5 text-muted-foreground transition hover:bg-secondary hover:text-primary"
-                activeProps={{
-                  className:
-                    "rounded-lg px-2.5 py-1.5 bg-secondary text-primary font-semibold",
-                }}
-              >
-                {n.label}
-              </Link>
+          <nav className="hidden min-w-0 items-center gap-1 text-sm font-medium md:flex">
+            {NAV_GROUPS.map((group) => (
+              <NavGroup key={group.label} group={group} />
             ))}
           </nav>
+
 
           <div className="flex min-w-0 items-center justify-center md:hidden">
             <NetworkToggle
