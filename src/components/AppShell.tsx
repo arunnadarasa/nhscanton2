@@ -378,3 +378,45 @@ function NetworkToggle({
   );
 }
 
+type NavGroupDef = { label: string; width: string; items: NavGroupItem[] };
+
+function NavGroup({ group }: { group: NavGroupDef }) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-muted-foreground transition hover:bg-secondary hover:text-primary group-focus-within:bg-secondary group-focus-within:text-primary"
+      >
+        {group.label}
+        <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" />
+      </button>
+      <div
+        className={`invisible absolute left-0 top-full z-50 ${group.width} translate-y-1 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100`}
+      >
+        <div className="flex flex-col gap-0.5 rounded-xl border border-border bg-white/95 p-2 shadow-lg backdrop-blur-xl">
+          {group.items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="flex flex-col rounded-lg px-3 py-2 transition hover:bg-secondary"
+              activeProps={{
+                className:
+                  "flex flex-col rounded-lg px-3 py-2 bg-secondary",
+              }}
+            >
+              <span className="text-sm font-semibold text-foreground">
+                {item.label}
+              </span>
+              {item.description ? (
+                <span className="mt-0.5 text-[11px] text-muted-foreground">
+                  {item.description}
+                </span>
+              ) : null}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
