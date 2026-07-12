@@ -194,9 +194,11 @@ const THEMES: { label: string; hit: "yes" | "partial" }[] = [
 const CHECKLIST: { to: string; label: string; note: string }[] = [
   { to: "/", label: "Open /", note: "See the £192bn breakdown and Canton pitch." },
   { to: "/allocations", label: "Open /allocations", note: "Create a SubAllocation as DHSC." },
+  { to: "/trust/GSTT", label: "Open /trust/GSTT", note: "See a Trust's sub-allocations and spend commitments." },
   { to: "/icb/LDN", label: "Open /icb/LDN", note: "Countersign a SpendCommitment as the ICB." },
   { to: "/audit", label: "Open /audit", note: "Confirm only co-signed spend reaches the auditor." },
   { to: "/ledger", label: "Open /ledger", note: "Inspect raw contracts with signatories & observers." },
+  { to: "/contracts/new", label: "Open /contracts/new", note: "Create any Daml template from the registry." },
   { to: "/deploy", label: "Open /deploy", note: "See how to point the app at a real Canton 3.4 participant." },
 ];
 
@@ -237,8 +239,8 @@ function HackathonPage() {
             "Canton 3.4",
             "JSON Ledger API v2",
             "Seaport Devnet (live)",
-            "5 Daml templates",
-            "4 deploy paths",
+            "15+ Daml templates",
+            "3 live networks",
           ].map((b) => (
             <Badge key={b} variant="secondary">
               {b}
