@@ -1,5 +1,5 @@
 ---
-name: canton-fly-deploy
+name: canton-seaport-deploy
 description: Deploy and operate a Canton 3.x participant for a Daml app — primarily on a managed Seaport / Canton Network Devnet validator, or self-hosted on Fly.io as a fallback. Covers JSON Ledger API v2, JWT and OIDC auth, the idempotent bootstrap (DAR upload, party allocation, user + rights), DAR lifecycle and upgrade traps, mock-USDCx, SHA-256 commitment parity, the generic Create-Contract UI pattern, the memory/localnet/devnet runtime switcher, and the failure modes that took us hours to find.
 ---
 
