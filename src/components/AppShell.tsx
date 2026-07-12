@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
-import { LogIn, LogOut, Menu } from "lucide-react";
+import { ChevronDown, LogIn, LogOut, Menu } from "lucide-react";
 
 
 import { getLedgerMode } from "@/lib/nhs/canton.functions";
@@ -43,6 +43,39 @@ const NAV_LINKS = [
   { to: "/hackathon", label: "Hackathon" },
   { to: "/deck", label: "Pitch deck" },
 ] as const;
+
+type NavGroupItem = { to: string; label: string; description?: string };
+const NAV_GROUPS: Array<{ label: string; width: string; items: NavGroupItem[] }> = [
+  {
+    label: "Cockpits",
+    width: "w-64",
+    items: [
+      { to: "/allocations", label: "Allocations", description: "Budget distribution across ICBs" },
+      { to: "/icb/LDN", label: "ICB cockpit", description: "Integrated Care Board operations" },
+      { to: "/trust/GSTT", label: "Trust view", description: "Provider and facility performance" },
+    ],
+  },
+  {
+    label: "Ledger",
+    width: "w-72",
+    items: [
+      { to: "/ledger", label: "Ledger", description: "Immutable transaction record" },
+      { to: "/audit", label: "Audit", description: "Compliance & governance stream" },
+      { to: "/contracts/new", label: "Create contract", description: "Submit a new Daml contract" },
+    ],
+  },
+  {
+    label: "About",
+    width: "w-64",
+    items: [
+      { to: "/canton-vs-evm", label: "Why Canton" },
+      { to: "/how-it-works", label: "How it's built" },
+      { to: "/deploy", label: "Deploy" },
+      { to: "/hackathon", label: "Hackathon" },
+      { to: "/deck", label: "Pitch deck" },
+    ],
+  },
+];
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -179,21 +212,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </div>
 
-          <nav className="hidden items-center gap-1 text-sm font-medium md:flex">
-            {NAV_LINKS.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                className="rounded-lg px-2.5 py-1.5 text-muted-foreground transition hover:bg-secondary hover:text-primary"
-                activeProps={{
-                  className:
-                    "rounded-lg px-2.5 py-1.5 bg-secondary text-primary font-semibold",
-                }}
-              >
-                {n.label}
-              </Link>
+          <nav className="hidden min-w-0 items-center gap-1 text-sm font-medium md:flex">
+            {NAV_GROUPS.map((group) => (
+              <NavGroup key={group.label} group={group} />
             ))}
           </nav>
+
 
           <div className="flex min-w-0 items-center justify-center md:hidden">
             <NetworkToggle
@@ -210,7 +234,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-            <div className="hidden md:block">
+            <div className="hidden md:flex md:items-center md:gap-2">
+              <Link
+                to="/contracts/new"
+                className="rounded-lg border border-border bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition hover:bg-secondary hover:text-primary"
+              >
+                Create contract
+              </Link>
+              <Link
+                to="/deploy"
+                className="rounded-lg bg-primary px-3.5 py-1.5 text-[12px] font-semibold text-primary-foreground shadow-glow transition hover:opacity-90"
+              >
+                Deploy
+              </Link>
+              <div className="mx-1 h-6 w-px bg-border" />
               <NetworkToggle
                 current={currentAlias}
                 available={available}
@@ -223,6 +260,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }}
               />
             </div>
+
 
             {email ? (
               <button
@@ -336,6 +374,48 @@ function NetworkToggle({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+type NavGroupDef = { label: string; width: string; items: NavGroupItem[] };
+
+function NavGroup({ group }: { group: NavGroupDef }) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-muted-foreground transition hover:bg-secondary hover:text-primary group-focus-within:bg-secondary group-focus-within:text-primary"
+      >
+        {group.label}
+        <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" />
+      </button>
+      <div
+        className={`invisible absolute left-0 top-full z-50 ${group.width} translate-y-1 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100`}
+      >
+        <div className="flex flex-col gap-0.5 rounded-xl border border-border bg-white/95 p-2 shadow-lg backdrop-blur-xl">
+          {group.items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="flex flex-col rounded-lg px-3 py-2 transition hover:bg-secondary"
+              activeProps={{
+                className:
+                  "flex flex-col rounded-lg px-3 py-2 bg-secondary",
+              }}
+            >
+              <span className="text-sm font-semibold text-foreground">
+                {item.label}
+              </span>
+              {item.description ? (
+                <span className="mt-0.5 text-[11px] text-muted-foreground">
+                  {item.description}
+                </span>
+              ) : null}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

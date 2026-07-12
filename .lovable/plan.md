@@ -1,26 +1,36 @@
-## Problem
+Rework the desktop top navigation in `src/components/AppShell.tsx` to match the "Enterprise hierarchical" direction. Mobile Sheet nav and NetworkToggle logic stay unchanged.
 
-On mobile (384px), the Create Contract form panel overflows the viewport to the right. Visible symptoms in the screenshot:
+## Changes
 
-- Template header subtitle `NhsTokenisedBudgetAllocation:BudgetAllocationPrivacy` runs off the right edge
-- Field-kind badges are clipped (`Part…`, `Tex…`)
-- The form card's right border is cut off the screen
+**`src/components/AppShell.tsx` — desktop `<nav>` only**
 
-Root cause: the parent grid `md:grid-cols-[260px_minmax(0,1fr)_320px]` has no explicit mobile track, so it defaults to `grid-cols-1` — but the form panel's children (long mono strings, non-wrapping subtitle) force intrinsic width larger than the viewport because the grid track has no `minmax(0, …)` clamp on mobile either. Combined with `break-all` missing on the template subtitle, the panel expands.
+Replace the flat row of 11 links with 3 hover-dropdown groups plus 2 primary actions. Layout stays the floating glass bar; only the middle nav slot changes.
 
-## Fix (UI only, mobile only)
+Groups:
+- **Cockpits** → Allocations, ICB cockpit, Trust view
+- **Ledger** → Ledger, Audit, Create contract
+- **About** → Why Canton, How it's built, Deploy, Hackathon, Pitch deck
 
-### `src/routes/contracts.new.tsx`
-- Add explicit `grid-cols-[minmax(0,1fr)]` on mobile so the single column can shrink: `grid gap-5 grid-cols-[minmax(0,1fr)] md:grid-cols-[260px_minmax(0,1fr)_320px]`
-- Add `min-w-0` to the form panel wrapper (`order-1 … min-w-0`) and the Execution Log / Active Contracts wrapper so their contents can shrink
+Primary CTAs (always visible, right of the dropdowns, before the MEMO/DEVNET toggle):
+- **Create contract** (secondary style)
+- **Deploy** (primary filled)
 
-### `src/components/contracts/CreateContractForm.tsx`
-- Template header card: add `min-w-0` to the card, `truncate` (or `break-all` for the mono subtitle) to `{tpl.module}:{tpl.label}` line, and `break-words` to the label
-- Field label row (`<Label>`): wrap in a `min-w-0` container; the name span already has `truncate` but the row is a flex — ensure the flex parent has `min-w-0 flex-1` so the badge on the right stays inside the panel instead of being pushed off
-- actAs container: already grid, but add `min-w-0` to be safe
+Environment toggle (MEMO/DEVNET) and Sign in/out stay in their current right-side slot.
 
-### Verification
-- `tsgo --noEmit`
-- Playwright screenshot at 384×800 confirming: no horizontal scroll, template subtitle wraps or truncates within card, `Party`/`Text`/`Numeric`/`Commitment` badges fully visible on the right of each field label
+## Implementation notes (technical)
 
-No changes to desktop layout, business logic, routing, or server functions.
+- Add a `NAV_GROUPS` constant with `{ label, items: [{ to, label, description? }] }`. Keep the existing flat `NAV_LINKS` array for the mobile Sheet so mobile behavior is unaffected.
+- Build a small `NavGroup` component using pure Tailwind hover state (`group` + `group-hover:visible`) and a chevron from `lucide-react` that rotates 180° on hover — no new deps, no Radix menu needed.
+- Dropdown panel: `absolute top-full left-0 mt-2 w-64 rounded-xl border border-border bg-white/95 backdrop-blur-xl shadow-lg p-2` with each item as a `<Link>` styled like the prototype (title + optional muted description).
+- Add tiny buffer `pt-2` on the panel so cursor travel from trigger→panel doesn't lose hover.
+- Ensure keyboard access: trigger is a `<button>` that toggles an `open` state on focus-within as a fallback, so tab navigation still reveals the group.
+- Wrap the whole `<nav>` in `hidden md:flex items-center gap-1` and give it `min-w-0` so it doesn't force overflow.
+- Add the two CTA buttons (`Create contract` link + `Deploy` link) between `<nav>` and the right-side toggle cluster. Use existing design tokens (`bg-primary text-primary-foreground` for Deploy, `border border-border bg-white/60` for Create contract).
+- Import `ChevronDown` from `lucide-react`.
+- No changes to routes, mode toggle, auth logic, or the mobile Sheet block.
+
+## Out of scope
+
+- No visual changes to the hero or body content.
+- No color/token changes in `src/styles.css`.
+- Mobile nav (Sheet) stays as-is with the flat link list.
