@@ -115,20 +115,21 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
         </div>
         <h1 className="mt-6 text-7xl font-bold tracking-tight">NHS Ledger</h1>
         <p className="mt-4 text-3xl text-muted-foreground">
-          Tokenized public-money budgets on Canton Network
+          The £192bn NHS budget, reconciled on a privacy-enabled Canton ledger.
         </p>
         <div className="mt-10 flex gap-4 text-sm text-muted-foreground">
           <span className="rounded-full border border-border px-4 py-1.5">
             Track 2 · TradeFi / RWA
           </span>
           <span className="rounded-full border border-border px-4 py-1.5">
-            Daml 3.4
+            Daml 3.4 · 8 packages
           </span>
           <span className="rounded-full border border-border px-4 py-1.5">
-            Seaport Devnet
+            Seaport Devnet · live
           </span>
 
         </div>
+
       </div>
     ),
   },
