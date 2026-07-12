@@ -1,45 +1,32 @@
-Refresh the pitch deck at `src/routes/deck.tsx` so it reflects the app as it stands today. Content edits only — no deck framework, layout, or styling changes.
+Update the active `canton-fly-deploy` skill so future agents inherit the lessons from this NHS Canton project. Draft under `.agents/skills/canton-fly-deploy/` then apply via `skills--apply_draft`.
 
-## Slides to update
+## Edits to `SKILL.md`
 
-### 1. `title` slide
-- Keep the three chips but replace the third with a more accurate stack line: **"Track 2 · TradeFi / RWA"**, **"Daml 3.4 · 8 packages"**, **"Seaport Devnet · live"**.
-- Update subtitle to: *"The £192bn NHS budget, reconciled on a privacy-enabled Canton ledger."* (matches the homepage hero copy.)
+1. **Reinforce Devnet-first framing** in the intro paragraph and the "Pick your path" table caption. Keep the skill name (`canton-fly-deploy`) — renaming would break the existing retrieval slug.
+2. **Add a 5th invariant** to the "Four invariants" block (rename to "Five invariants"):
+   > **SHA-256 commitment parity.** If your Daml template stores commitments (`hashText <fields>`), the on-ledger `hashText` and the frontend pre-image hash MUST produce identical bytes. Use `import DA.Text (sha256)` + `hashText t = sha256 t` in Daml, and a real SHA-256 in TS (Web Crypto `crypto.subtle.digest("SHA-256", ...)` or an inline FIPS 180-4 impl). Identity hashes ("just return the text") silently work locally then fail audit-time reconciliation.
+3. **Add a new "App architecture" section** (short, above "Don't repeat these") pointing to three new reference files:
+   - `references/mode-runtime.md` — the `memory | localnet | devnet` runtime switcher (`src/lib/canton/mode.server.ts`), per-request cookie override, persisted execution log, memory-mode fallback for offline demos.
+   - `references/create-contract-ui.md` — the generic Create-Contract pattern: a `templates.ts` registry describes every template (id, package, module, entity, fields with hashing hints), driving one dynamic form at `/contracts/new` that calls a single `createCommand` server function.
+   - `references/commitment-hashing.md` — SHA-256 parity between Daml `hashText` and the frontend, including the "encode as UTF-8 → hex-lowercase" convention and a test recipe (round-trip a sample string in both languages, assert equal).
+4. **Expand the "When to read which reference" table** with rows for the three new files.
+5. **Add three new "Don't repeat these" bullets** (grouped under a new **App integration** subsection):
+   - Don't ship an identity `hashText` — Daml and TS must both SHA-256 the same UTF-8 bytes.
+   - Don't scatter template-specific create forms across routes — use one registry-driven form.
+   - Don't hardcode the ledger network — read a per-request `canton_network` cookie, fall back to `CANTON_MODE`, and always keep `memory` mode as an offline demo path.
 
-### 2. `problem` slide
-- Bump the headline number from £180B/yr → **£192B/yr** to align with the rest of the app.
+## New reference files (concise, ~40-80 lines each)
 
-### 3. `how` slide (biggest update)
-Replace the on-ledger / off-ledger card contents with today's stack:
+- `references/commitment-hashing.md` — Daml snippet, TS snippet (Web Crypto preferred, inline fallback for edge runtimes without subtle), parity-test recipe, common divergences (utf-8 vs utf-16, hex casing, trimming).
+- `references/create-contract-ui.md` — template registry shape, dynamic form generation, `hashedFrom` field pointer, single `createCommand` server function, why grouping templates by domain (Budget Allocation / Spend Commitment / Reconciled Spend / Settlement / Invoice) beats grouping by tech concern.
+- `references/mode-runtime.md` — `getLedgerMode()` server fn, `setCantonNetwork` mutation, `canton_network` cookie precedence over `CANTON_MODE`, memory-mode implementation notes, persisted execution log for demo replay.
 
-- **On-ledger** — Daml 3.4, 8 packages:
-  - `Nhs` · `NhsTokenisedBudgetAllocation`
-  - `BudgetAllocationReview` · `CommitmentInspector`
-  - `SettlementReview` · `ReconciledSpendSummary`
-  - `InvoiceAnalytics` · `InvoiceRisk`
-  - Footnote: *"27 templates grouped into Budget Allocation, Spend Commitment, Reconciled Spend, Settlement, Invoice."*
-  - Add one line: *"SHA-256 commitments (`hashText = sha256`) computed identically in Daml and the frontend."*
+## Hand-off
 
-- **Off-ledger** — keep TanStack Start / JSON Ledger API v2 / OIDC lines and add:
-  - *"Generic Create-Contract UI driven by a template registry"* (`/contracts/new`)
-  - *"Server functions with memory-mode fallback + persisted execution log"*
-  - Footnote: *"Seaport Devnet (primary) · in-memory demo fallback"*
-
-### 4. `demo` slide
-Add a fifth deep link between Trust view and Audit trail:
-- **"4. Create contract"** → `/contracts/new`
-- Renumber Audit trail to **5**.
-- Adjust the column so 5 links still fit (unchanged flex-col; only a new row).
-
-### 5. `roadmap` slide — `Now` card
-Refresh the "Now" milestone to the current reality:
-- *"Live on Seaport Devnet — 8 Daml packages deployed, 27 contract templates wired to a generic Create-Contract UI, role-scoped cockpits for Trusts / ICBs / NAO auditor."*
-
-### 6. `criteria` slide — Application of technology
-Update to: *"Daml 3.4 (8 packages, 27 templates) on Canton Seaport Devnet, JSON Ledger API v2, SHA-256 commitment hashing, privacy by counterparty."*
+After writing the draft under `.agents/skills/canton-fly-deploy/`, call `skills--apply_draft` with path `.agents/skills/canton-fly-deploy` so the workspace skill updates.
 
 ## Out of scope
 
-- No changes to the `Slide` primitive, navigation, print mode, or slide ordering.
-- No new slides added or removed.
-- No changes to icons or accent visuals.
+- No changes to the existing 7 reference files.
+- No skill rename.
+- No changes to the project's own code.
