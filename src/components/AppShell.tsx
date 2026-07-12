@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
-import { LogIn, LogOut, Menu } from "lucide-react";
+import { ChevronDown, LogIn, LogOut, Menu } from "lucide-react";
 
 
 import { getLedgerMode } from "@/lib/nhs/canton.functions";
