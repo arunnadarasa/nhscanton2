@@ -7,6 +7,7 @@ import DA.Assert
 import DA.Optional
 import DA.Date
 import DA.Time
+import DA.Text (sha256)
 
 -- ============================================================
 -- COMMITMENTS
@@ -15,7 +16,8 @@ import DA.Time
 type Commitment = Text
 
 hashText : Text -> Commitment
-hashText t = t
+hashText t = sha256 t
+
 
 createAmountCommitment : Decimal -> Commitment
 createAmountCommitment amt =
