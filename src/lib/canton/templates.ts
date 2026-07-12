@@ -91,7 +91,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDef> = {
         kind: "hash",
         required: true,
         derivedFrom: "purpose",
-        help: "Auto-derived from purpose (identity hash — matches Daml hashText).",
+        help: "Auto-derived from purpose (SHA-256, matches Daml hashText).",
       },
     ],
   },
