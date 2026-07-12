@@ -317,12 +317,17 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     );
   }
 
-  // Pre-fetch existing rights so we only POST what's missing. Canton caps the
-  // number of rights per user (TOO_MANY_USER_RIGHTS at ~1000) and repeated
-  // deploys accumulate duplicates when the party fingerprint drifts, so a
-  // naive "grant everything every time" eventually hits the cap.
+  // Canton caps the number of rights per user (TOO_MANY_USER_RIGHTS at ~1000).
+  // Repeated deploys with different party fingerprints accumulate stale rights,
+  // so before granting we (a) list existing rights, (b) revoke any that point
+  // at a party ID NOT in the current allocs (stale fingerprint / removed
+  // party), and (c) POST only the rights that are actually missing.
+  const currentPartyIds = new Set(
+    allocs.filter((a) => a.partyId).map((a) => a.partyId!),
+  );
   const existingReadAs = new Set<string>();
   const existingActAs = new Set<string>();
+  const staleRights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
   try {
     const lr = await fetch(`${adminBase}/v2/users/${encodeURIComponent(userId)}/rights`, {
       headers: auth,
@@ -339,13 +344,45 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
       for (const r of lj.rights ?? []) {
         const read = r.kind?.CanReadAs?.value?.party;
         const act = r.kind?.CanActAs?.value?.party;
-        if (read) existingReadAs.add(read);
-        if (act) existingActAs.add(act);
+        if (read) {
+          if (currentPartyIds.has(read)) existingReadAs.add(read);
+          else staleRights.push({ kind: { CanReadAs: { value: { party: read } } } });
+        }
+        if (act) {
+          if (currentPartyIds.has(act)) existingActAs.add(act);
+          else staleRights.push({ kind: { CanActAs: { value: { party: act } } } });
+        }
       }
     }
   } catch {
-    // If listing fails, fall through and try to grant — worst case we hit
-    // the same TOO_MANY_USER_RIGHTS surfaced below.
+    // Fall through — worst case we hit TOO_MANY_USER_RIGHTS surfaced below.
+  }
+
+  let revokeResult: unknown = "skipped";
+  if (staleRights.length > 0) {
+    // Chunk revocations — Canton's revoke endpoint accepts arrays but very
+    // large payloads can time out on Devnet.
+    let revoked = 0;
+    let lastErr: { status: number; body: string } | undefined;
+    for (let i = 0; i < staleRights.length; i += 100) {
+      const chunk = staleRights.slice(i, i + 100);
+      const rv = await fetch(
+        `${adminBase}/v2/users/${encodeURIComponent(userId)}/rights/revoke`,
+        {
+          method: "POST",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, identityProviderId: "", rights: chunk }),
+        },
+      );
+      const rb = await rv.text();
+      if (rv.ok) {
+        revoked += chunk.length;
+      } else {
+        lastErr = { status: rv.status, body: rb.slice(0, 400) };
+        break;
+      }
+    }
+    revokeResult = { revoked, total: staleRights.length, lastErr };
   }
 
   const rights: Array<{ kind: Record<string, { value: { party: string } }> }> = [];
@@ -370,13 +407,14 @@ export async function runDeploy(opts: RunDeployOpts): Promise<Response> {
     rightsResult = { status: r.status, ok: r.ok, granted: rights.length, body: rb.slice(0, 800) };
     if (!r.ok && r.status !== 409) {
       return Response.json(
-        { mode, step: "grant-rights", status: r.status, granted: rights.length, body: rb.slice(0, 800), allocs },
+        { mode, step: "grant-rights", status: r.status, granted: rights.length, revokeResult, body: rb.slice(0, 800), allocs },
         { status: 502 },
       );
     }
   } else {
     rightsResult = { status: 200, ok: true, granted: 0, note: "all rights already present" };
   }
+
 
 
   let verify: { ok: boolean; status?: number; body?: string; error?: string };
