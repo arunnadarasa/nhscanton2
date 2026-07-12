@@ -194,30 +194,41 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded-2xl border border-border bg-card/40 p-6">
             <div className="text-sm font-semibold uppercase tracking-widest text-primary">
-              On-ledger
+              On-ledger · Daml 3.4 · 8 packages
             </div>
-            <ul className="mt-4 space-y-2 text-xl">
-              <li>· <code>BudgetAllocation</code></li>
-              <li>· <code>SpendCommitment</code></li>
-              <li>· <code>ReconciledSpend</code></li>
-              <li className="text-muted-foreground">Daml 3.4 templates</li>
+            <ul className="mt-4 space-y-1.5 text-lg">
+              <li>· <code>Nhs</code> · <code>NhsTokenisedBudgetAllocation</code></li>
+              <li>· <code>BudgetAllocationReview</code> · <code>CommitmentInspector</code></li>
+              <li>· <code>SettlementReview</code> · <code>ReconciledSpendSummary</code></li>
+              <li>· <code>InvoiceAnalytics</code> · <code>InvoiceRisk</code></li>
+              <li className="pt-2 text-sm text-muted-foreground">
+                27 templates grouped: Budget Allocation · Spend Commitment ·
+                Reconciled Spend · Settlement · Invoice.
+              </li>
+              <li className="text-sm text-muted-foreground">
+                SHA-256 commitments (<code>hashText = sha256</code>) computed
+                identically in Daml and the frontend.
+              </li>
             </ul>
           </div>
           <div className="rounded-2xl border border-border bg-card/40 p-6">
             <div className="text-sm font-semibold uppercase tracking-widest text-primary">
               Off-ledger
             </div>
-            <ul className="mt-4 space-y-2 text-xl">
+            <ul className="mt-4 space-y-1.5 text-lg">
               <li>· TanStack Start (SSR React)</li>
               <li>· JSON Ledger API v2 via fetch</li>
               <li>· OIDC client_credentials → JWT</li>
-              <li className="text-muted-foreground">
-                Seaport Devnet (live) · SIMULATED fallback
+              <li>· Generic Create-Contract UI from template registry (<code>/contracts/new</code>)</li>
+              <li>· Server functions with memory-mode fallback + persisted execution log</li>
+              <li className="pt-2 text-sm text-muted-foreground">
+                Seaport Devnet (primary) · in-memory demo fallback
               </li>
             </ul>
           </div>
 
         </div>
+
       </Slide>
     ),
   },
