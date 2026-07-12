@@ -499,7 +499,7 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
             },
             {
               t: "Application of technology",
-              d: "Daml 3.4 templates on Canton, JSON Ledger API v2, privacy by counterparty.",
+              d: "Daml 3.4 (8 packages, 27 templates) on Canton Seaport Devnet, JSON Ledger API v2, SHA-256 commitment hashing, privacy by counterparty.",
             },
             {
               t: "Originality",
