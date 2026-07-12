@@ -167,13 +167,15 @@ const SUBMISSION: { label: string; done: boolean; note: string; to?: string; hre
   },
   {
     label: "Presentation deck",
-    done: false,
-    note: "TODO before submission — narrative is already on this page; needs to be slide-shaped.",
+    done: true,
+    note: "Slide-shaped narrative of the NHS Ledger pitch, live in-app.",
+    to: "/deck",
   },
   {
     label: "3-minute video pitch with demo",
-    done: false,
-    note: "TODO before submission — script is the 'Judge in 3 minutes' checklist below.",
+    done: true,
+    note: "Recorded walkthrough covering the problem, the Canton model, and a live demo.",
+    href: "https://youtu.be/q2zUKGgZYfw",
   },
 ];
 
