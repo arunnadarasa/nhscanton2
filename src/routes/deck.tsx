@@ -115,20 +115,21 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
         </div>
         <h1 className="mt-6 text-7xl font-bold tracking-tight">NHS Ledger</h1>
         <p className="mt-4 text-3xl text-muted-foreground">
-          Tokenized public-money budgets on Canton Network
+          The £192bn NHS budget, reconciled on a privacy-enabled Canton ledger.
         </p>
         <div className="mt-10 flex gap-4 text-sm text-muted-foreground">
           <span className="rounded-full border border-border px-4 py-1.5">
             Track 2 · TradeFi / RWA
           </span>
           <span className="rounded-full border border-border px-4 py-1.5">
-            Daml 3.4
+            Daml 3.4 · 8 packages
           </span>
           <span className="rounded-full border border-border px-4 py-1.5">
-            Seaport Devnet
+            Seaport Devnet · live
           </span>
 
         </div>
+
       </div>
     ),
   },
@@ -137,7 +138,7 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
     render: () => (
       <Slide
         kicker="The problem"
-        title="£180B/yr moves through spreadsheets and email"
+        title="£192B/yr moves through spreadsheets and email"
         accent={<Building2 className="h-10 w-10 text-primary/70" />}
       >
         <ul className="space-y-5">
@@ -193,30 +194,41 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded-2xl border border-border bg-card/40 p-6">
             <div className="text-sm font-semibold uppercase tracking-widest text-primary">
-              On-ledger
+              On-ledger · Daml 3.4 · 8 packages
             </div>
-            <ul className="mt-4 space-y-2 text-xl">
-              <li>· <code>BudgetAllocation</code></li>
-              <li>· <code>SpendCommitment</code></li>
-              <li>· <code>ReconciledSpend</code></li>
-              <li className="text-muted-foreground">Daml 3.4 templates</li>
+            <ul className="mt-4 space-y-1.5 text-lg">
+              <li>· <code>Nhs</code> · <code>NhsTokenisedBudgetAllocation</code></li>
+              <li>· <code>BudgetAllocationReview</code> · <code>CommitmentInspector</code></li>
+              <li>· <code>SettlementReview</code> · <code>ReconciledSpendSummary</code></li>
+              <li>· <code>InvoiceAnalytics</code> · <code>InvoiceRisk</code></li>
+              <li className="pt-2 text-sm text-muted-foreground">
+                27 templates grouped: Budget Allocation · Spend Commitment ·
+                Reconciled Spend · Settlement · Invoice.
+              </li>
+              <li className="text-sm text-muted-foreground">
+                SHA-256 commitments (<code>hashText = sha256</code>) computed
+                identically in Daml and the frontend.
+              </li>
             </ul>
           </div>
           <div className="rounded-2xl border border-border bg-card/40 p-6">
             <div className="text-sm font-semibold uppercase tracking-widest text-primary">
               Off-ledger
             </div>
-            <ul className="mt-4 space-y-2 text-xl">
+            <ul className="mt-4 space-y-1.5 text-lg">
               <li>· TanStack Start (SSR React)</li>
               <li>· JSON Ledger API v2 via fetch</li>
               <li>· OIDC client_credentials → JWT</li>
-              <li className="text-muted-foreground">
-                Seaport Devnet (live) · SIMULATED fallback
+              <li>· Generic Create-Contract UI from template registry (<code>/contracts/new</code>)</li>
+              <li>· Server functions with memory-mode fallback + persisted execution log</li>
+              <li className="pt-2 text-sm text-muted-foreground">
+                Seaport Devnet (primary) · in-memory demo fallback
               </li>
             </ul>
           </div>
 
         </div>
+
       </Slide>
     ),
   },
@@ -247,8 +259,10 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
               { to: "/allocations", label: "1. Allocations" },
               { to: "/icb/LDN", label: "2. ICB cockpit" },
               { to: "/trust/GSTT", label: "3. Trust view" },
-              { to: "/audit", label: "4. Audit trail" },
+              { to: "/contracts/new", label: "4. Create contract" },
+              { to: "/audit", label: "5. Audit trail" },
             ].map((l) => (
+
               <Link
                 key={l.to}
                 to={l.to}
@@ -406,7 +420,7 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
       >
         <div className="grid grid-cols-4 gap-4">
           {[
-            { q: "Now", t: "Live on Seaport-managed Canton Devnet — 7 NHS Trusts funded with 200M mock-USDCx each, ready for DvP settlement" },
+            { q: "Now", t: "Live on Seaport Devnet — 8 Daml packages deployed, 27 contract templates wired to a generic Create-Contract UI, role-scoped cockpits for Trusts / ICBs / NAO auditor" },
             { q: "Q3", t: "NHSE pilot — 1 ICB, 3 Trusts, read-only NAO observer party" },
             { q: "Q4", t: "3 ICBs live; resume self-hosted Fly path for sovereign deployments" },
             { q: "2026", t: "Payment rails, NHS Scotland/Wales, research grant budgets" },
@@ -485,7 +499,7 @@ const SLIDES: { id: string; render: () => ReactNode }[] = [
             },
             {
               t: "Application of technology",
-              d: "Daml 3.4 templates on Canton, JSON Ledger API v2, privacy by counterparty.",
+              d: "Daml 3.4 (8 packages, 27 templates) on Canton Seaport Devnet, JSON Ledger API v2, SHA-256 commitment hashing, privacy by counterparty.",
             },
             {
               t: "Originality",

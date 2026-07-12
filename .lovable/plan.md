@@ -1,36 +1,45 @@
-Rework the desktop top navigation in `src/components/AppShell.tsx` to match the "Enterprise hierarchical" direction. Mobile Sheet nav and NetworkToggle logic stay unchanged.
+Refresh the pitch deck at `src/routes/deck.tsx` so it reflects the app as it stands today. Content edits only — no deck framework, layout, or styling changes.
 
-## Changes
+## Slides to update
 
-**`src/components/AppShell.tsx` — desktop `<nav>` only**
+### 1. `title` slide
+- Keep the three chips but replace the third with a more accurate stack line: **"Track 2 · TradeFi / RWA"**, **"Daml 3.4 · 8 packages"**, **"Seaport Devnet · live"**.
+- Update subtitle to: *"The £192bn NHS budget, reconciled on a privacy-enabled Canton ledger."* (matches the homepage hero copy.)
 
-Replace the flat row of 11 links with 3 hover-dropdown groups plus 2 primary actions. Layout stays the floating glass bar; only the middle nav slot changes.
+### 2. `problem` slide
+- Bump the headline number from £180B/yr → **£192B/yr** to align with the rest of the app.
 
-Groups:
-- **Cockpits** → Allocations, ICB cockpit, Trust view
-- **Ledger** → Ledger, Audit, Create contract
-- **About** → Why Canton, How it's built, Deploy, Hackathon, Pitch deck
+### 3. `how` slide (biggest update)
+Replace the on-ledger / off-ledger card contents with today's stack:
 
-Primary CTAs (always visible, right of the dropdowns, before the MEMO/DEVNET toggle):
-- **Create contract** (secondary style)
-- **Deploy** (primary filled)
+- **On-ledger** — Daml 3.4, 8 packages:
+  - `Nhs` · `NhsTokenisedBudgetAllocation`
+  - `BudgetAllocationReview` · `CommitmentInspector`
+  - `SettlementReview` · `ReconciledSpendSummary`
+  - `InvoiceAnalytics` · `InvoiceRisk`
+  - Footnote: *"27 templates grouped into Budget Allocation, Spend Commitment, Reconciled Spend, Settlement, Invoice."*
+  - Add one line: *"SHA-256 commitments (`hashText = sha256`) computed identically in Daml and the frontend."*
 
-Environment toggle (MEMO/DEVNET) and Sign in/out stay in their current right-side slot.
+- **Off-ledger** — keep TanStack Start / JSON Ledger API v2 / OIDC lines and add:
+  - *"Generic Create-Contract UI driven by a template registry"* (`/contracts/new`)
+  - *"Server functions with memory-mode fallback + persisted execution log"*
+  - Footnote: *"Seaport Devnet (primary) · in-memory demo fallback"*
 
-## Implementation notes (technical)
+### 4. `demo` slide
+Add a fifth deep link between Trust view and Audit trail:
+- **"4. Create contract"** → `/contracts/new`
+- Renumber Audit trail to **5**.
+- Adjust the column so 5 links still fit (unchanged flex-col; only a new row).
 
-- Add a `NAV_GROUPS` constant with `{ label, items: [{ to, label, description? }] }`. Keep the existing flat `NAV_LINKS` array for the mobile Sheet so mobile behavior is unaffected.
-- Build a small `NavGroup` component using pure Tailwind hover state (`group` + `group-hover:visible`) and a chevron from `lucide-react` that rotates 180° on hover — no new deps, no Radix menu needed.
-- Dropdown panel: `absolute top-full left-0 mt-2 w-64 rounded-xl border border-border bg-white/95 backdrop-blur-xl shadow-lg p-2` with each item as a `<Link>` styled like the prototype (title + optional muted description).
-- Add tiny buffer `pt-2` on the panel so cursor travel from trigger→panel doesn't lose hover.
-- Ensure keyboard access: trigger is a `<button>` that toggles an `open` state on focus-within as a fallback, so tab navigation still reveals the group.
-- Wrap the whole `<nav>` in `hidden md:flex items-center gap-1` and give it `min-w-0` so it doesn't force overflow.
-- Add the two CTA buttons (`Create contract` link + `Deploy` link) between `<nav>` and the right-side toggle cluster. Use existing design tokens (`bg-primary text-primary-foreground` for Deploy, `border border-border bg-white/60` for Create contract).
-- Import `ChevronDown` from `lucide-react`.
-- No changes to routes, mode toggle, auth logic, or the mobile Sheet block.
+### 5. `roadmap` slide — `Now` card
+Refresh the "Now" milestone to the current reality:
+- *"Live on Seaport Devnet — 8 Daml packages deployed, 27 contract templates wired to a generic Create-Contract UI, role-scoped cockpits for Trusts / ICBs / NAO auditor."*
+
+### 6. `criteria` slide — Application of technology
+Update to: *"Daml 3.4 (8 packages, 27 templates) on Canton Seaport Devnet, JSON Ledger API v2, SHA-256 commitment hashing, privacy by counterparty."*
 
 ## Out of scope
 
-- No visual changes to the hero or body content.
-- No color/token changes in `src/styles.css`.
-- Mobile nav (Sheet) stays as-is with the flat link list.
+- No changes to the `Slide` primitive, navigation, print mode, or slide ordering.
+- No new slides added or removed.
+- No changes to icons or accent visuals.
