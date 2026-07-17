@@ -61,6 +61,13 @@ All funding allocation, approval, and reconciliation processes are enforced by D
 ## Files
 
 - `daml/Nhs.daml` — Daml templates (signatories, observers, choices).
+- `daml/BudgetAllocationReview.daml`
+- `CommitmentInspector.daml`
+- `InvoiceAnalytics.daml`
+- `InvoiceRisk.daml`
+- `NhsTokenisedBudgetAllocation.daml`
+- `ReconciledSpendSummary.daml`
+- `SettlementReview.daml`
 - `daml/daml.yaml` — Daml SDK 3.4 project manifest (`dpm build`).
 - `src/lib/canton/client.server.ts` — Live/memory adapter.
 - `src/lib/canton/live.server.ts` — JSON Ledger API **v2** client (raw `fetch`).
