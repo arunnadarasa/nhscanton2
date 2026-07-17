@@ -61,18 +61,17 @@ This App is enabled with SHA 256 Encryption and Security, All funding allocation
 ## Files
 
 - `daml/Nhs.daml` — Daml templates (signatories, observers, choices).
-- `daml/BudgetAllocationReview.daml`
-- `CommitmentInspector.daml`
-- `InvoiceAnalytics.daml`
-- `InvoiceRisk.daml`
-- `NhsTokenisedBudgetAllocation.daml`
-- `ReconciledSpendSummary.daml`
-- `SettlementReview.daml`
+- `daml/BudgetAllocationReview.daml` - Reviews and validates budget allocations before distribution.
+- `CommitmentInspector.daml` - Inspects and verifies the integrity of spend commitments.
+- `InvoiceAnalytics.daml` - Calculates invoice totals with VAT for financial analysis.
+- `InvoiceRisk.daml` - Calculates the risk level of invoices based on approval and supplier verification.
+- `NhsTokenisedBudgetAllocation.daml`- Daml templates (signatories, observers, choices). 
+- `ReconciledSpendSummary.daml` - Generates a reconciliation summary of spending records.
+- `SettlementReview.daml` - Reviews settlements to verify audit readiness.
 - `daml/daml.yaml` — Daml SDK 3.4 project manifest (`dpm build`).
 - `src/lib/canton/client.server.ts` — Live/memory adapter.
 - `src/lib/canton/live.server.ts` — JSON Ledger API **v2** client (raw `fetch`).
-- `src/lib/canton/memory.server.ts` — In-process ledger that obeys
-  signatory/observer disclosure.
+- `src/lib/canton/memory.server.ts` — In-process ledger that obeys signatory/observer disclosure.
 - `src/lib/nhs/canton.functions.ts` — TanStack Start server functions used by the UI.
 
 ## Running against a real Canton participant
