@@ -56,7 +56,7 @@ The NHS Ledger enables transparent and auditable healthcare funding management o
 - Approved expenditure is recorded as `ReconciledSpend`
 - Auditors can observe reconciled spending for compliance and governance purposes
 
-This App is enabled with SHA 256 Encryption and Security, All funding allocation, approval, and reconciliation processes are enforced by Daml smart contracts, providing an immutable and privacy-preserving audit trail from government budget allocation to NHS expenditure.
+This App is enabled with SHA 256 Encryption with Canton Security, All funding allocation, approval, and reconciliation processes are enforced by Daml smart contracts, providing an immutable and privacy-preserving audit trail from government budget allocation to NHS expenditure.
 
 ## Files
 
