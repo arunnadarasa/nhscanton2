@@ -65,7 +65,7 @@ This App is enabled with SHA 256 Encryption with Canton Security, All funding al
 - `CommitmentInspector.daml` - Inspects and verifies the integrity of spend commitments.
 - `InvoiceAnalytics.daml` - Calculates invoice totals with VAT for financial analysis.
 - `InvoiceRisk.daml` - Calculates the risk level of invoices based on approval and supplier verification.
-- `NhsTokenisedBudgetAllocation.daml`- Daml templates (signatories, observers, choices). 
+- `NhsTokenisedBudgetAllocation.daml`- Daml templates (signatories, observers, choices) with enhanced security
 - `ReconciledSpendSummary.daml` - Generates a reconciliation summary of spending records.
 - `SettlementReview.daml` - Reviews settlements to verify audit readiness.
 - `daml/daml.yaml` — Daml SDK 3.4 project manifest (`dpm build`).
