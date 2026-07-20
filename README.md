@@ -65,7 +65,7 @@ This App is enabled with SHA 256 Encryption with Canton Security, All funding al
 |  LAYER 1: CLIENT                                                 |
 |  React 19 + TanStack Router + Tailwind CSS                       |
 |  - Role cockpits: DHSC, NHSE, ICB, Trust, Auditor                |
-|  - Create contract UI, ledger explorer, audit stream, pitch deck |
+|  - Create contract UI |
 +-----------------------------------------+------------------------+
                                           | TanStack Start server functions
                                           v
