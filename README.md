@@ -61,31 +61,33 @@ This App is enabled with SHA 256 Encryption with Canton Security, All funding al
 ## Technical Architecture
 
 ```text
-┌─────────────────────────────────────────┐
-│  Browser (React 19 + TanStack Router)   │
-│  - Role cockpits: DHSC / NHSE / ICB /   │
-│    Trust / Auditor                      │
-│  - Create-contract UI, ledger explorer, │
-│    audit stream, pitch deck, FAQ        │
-└──────────────┬──────────────────────────┘
-               │ TanStack Start server fns
-               ▼
-┌─────────────────────────────────────────┐
-│  Cloud Worker (TanStack Start)  │
-│  - JSON Ledger API v2 client (fetch)    │
-│  - Per-request network mode (cookie)    │
-│  - OIDC client_credentials for Seaport  │
-│  - In-memory ledger fallback            │
-└──────────────┬──────────────────────────┘
-               │ HTTPS / JSON Ledger API v2
-               ▼
-┌─────────────────────────────────────────┐
-│  Seaport Devnet participant │
-│  - Daml templates: NHS, NhsTokenised,   │
-│    BudgetAllocationReview, InvoiceRisk, │
-│    ReconciledSpendSummary, Settlement,  │
-│    MockUsdcx (demo settlement)          │
-└─────────────────────────────────────────┘
++------------------------------------------------------------------+
+|  LAYER 1: CLIENT                                                 |
+|  React 19 + TanStack Router + Tailwind CSS                       |
+|  - Role cockpits: DHSC, NHSE, ICB, Trust, Auditor                |
+|  - Create contract UI, ledger explorer, audit stream, pitch deck |
++-----------------------------------------+------------------------+
+                                          | TanStack Start server functions
+                                          v
++------------------------------------------------------------------+
+|  LAYER 2: EDGE WORKER                                            |
+|  TanStack Start (Vite 7)                                         |
+|  - JSON Ledger API v2 client (fetch)                             |
+|  - Per-request network mode (cookie)                             |
+|  - OIDC client_credentials for Seaport Devnet                    |
+|  - In-memory ledger fallback for local preview                 |
++-----------------------------------------+------------------------+
+                                          | HTTPS / JSON Ledger API v2
+                                          v
++------------------------------------------------------------------+
+|  LAYER 3: CANTON LEDGER                                          |
+|  Seaport Devnet participant                                      |
+|  - Daml packages: NHS, NhsTokenisedBudgetAllocation,            |
+|    BudgetAllocationReview, CommitmentInspector,                  |
+|    InvoiceAnalytics, InvoiceRisk, SettlementReview,                |
+|    ReconciledSpendSummary, MockUsdcx                               |
+|  - 27+ templates across budget, spend, settlement, review        |
++------------------------------------------------------------------+
 ```
 
 ### Stack
