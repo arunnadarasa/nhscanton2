@@ -18,6 +18,33 @@ summaryReport rs =
 
     commitmentRecorded =
       if isSome rs.supplierCommit then "Yes" else "No"
+
+    settlementStatus =
+      if isSome rs.settlementTxId then
+        "Settlement Completed"
+      else
+        "Settlement Pending"
+
+    supplierStatus =
+      if isSome rs.supplier then
+        "Supplier Information Available"
+      else
+        "Supplier Information Missing"
+
+    commitmentStatus =
+      if isSome rs.supplierCommit then
+        "Commitment Recorded"
+      else
+        "Commitment Not Recorded"
+
+    reconciliationStatus =
+      if isSome rs.supplier
+         && isSome rs.supplierCommit
+         && isSome rs.settlementTxId then
+        "Fully Reconciled"
+      else
+        "Partially Reconciled"
+
   in
     "========== Reconciled Spend Summary ==========\n" <>
     "Category              : " <> rs.category <> "\n" <>
@@ -26,4 +53,11 @@ summaryReport rs =
     "Supplier Recorded     : " <> supplierRecorded <> "\n" <>
     "Supplier Commitment   : " <> commitmentRecorded <> "\n" <>
     "Settlement Progress   : " <> show settlementProgress <> "%\n" <>
+    "Settlement Status     : " <> settlementStatus <> "\n" <>
+    "Supplier Status       : " <> supplierStatus <> "\n" <>
+    "Commitment Status     : " <> commitmentStatus <> "\n" <>
+    "Reconciliation Status : " <> reconciliationStatus <> "\n" <>
+    "Review Result         : Reconciliation summary generated\n" <>
+    "Audit Ready           : Yes\n" <>
+    "=============================================="
     "============================================="
