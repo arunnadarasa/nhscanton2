@@ -8,7 +8,7 @@ Targets **Canton 3.4 + JSON Ledger API v2**.
 **Primary deployment target:** [Seaport Devnet](https://app.devnet.seaport.to) via the Encode Hackathon — a managed 5N Sandbox validator with zero infrastructure to run.  
 **Local fallback:** [Canton Builder Tool](https://github.com/canton-network-devs/Canton-Builder-Tool) — one-command Splice LocalNet on your laptop.
 
-## Architecture
+## App Architecture
 
 ```text
 DHSC ──BudgetAllocation──▶ NHS England
