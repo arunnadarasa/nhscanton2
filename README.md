@@ -58,6 +58,58 @@ The NHS Ledger enables transparent and auditable healthcare funding management o
 
 This App is enabled with SHA 256 Encryption with Canton Security, All funding allocation, approval, and reconciliation processes are enforced by Daml smart contracts, providing an immutable and privacy-preserving audit trail from government budget allocation to NHS expenditure.
 
+## Technical Architecture
+
+```text
+┌─────────────────────────────────────────┐
+│  Browser (React 19 + TanStack Router)   │
+│  - Role cockpits: DHSC / NHSE / ICB /   │
+│    Trust / Auditor                      │
+│  - Create-contract UI, ledger explorer, │
+│    audit stream, pitch deck, FAQ        │
+└──────────────┬──────────────────────────┘
+               │ TanStack Start server fns
+               ▼
+┌─────────────────────────────────────────┐
+│  Lovable Cloud Worker (TanStack Start)  │
+│  - JSON Ledger API v2 client (fetch)    │
+│  - Per-request network mode (cookie)    │
+│  - OIDC client_credentials for Seaport  │
+│  - In-memory ledger fallback            │
+└──────────────┬──────────────────────────┘
+               │ HTTPS / JSON Ledger API v2
+               ▼
+┌─────────────────────────────────────────┐
+│  Seaport Devnet participant (Canton 3.4)│
+│  - Daml templates: NHS, NhsTokenised,   │
+│    BudgetAllocationReview, InvoiceRisk, │
+│    ReconciledSpendSummary, Settlement,  │
+│    MockUsdcx (demo settlement)          │
+└─────────────────────────────────────────┘
+```
+
+### Stack
+
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| Frontend | React 19, TanStack Router, Tailwind CSS | Type-safe, file-based routes; responsive role dashboards |
+| Full-stack framework | TanStack Start (Vite 7) | Server functions, SSR, edge deployment |
+| Backend / auth | Lovable Cloud (Supabase) | Auth, user profiles, persistent storage when needed |
+| Ledger client | Custom JSON Ledger API v2 client (`src/lib/canton/live.server.ts`) | `fetch`-based commands, streaming transaction trees, health probes |
+| Smart contracts | Daml SDK 3.4 (`dpm`) | Privacy-preserving templates with fine-grained signatories/observers |
+| Settlement demo | `MockUsdcx` Daml package | Atomic DvP: transfer mock-USDCx while archiving `SpendCommitment` |
+| Deployment target | Seaport Devnet | Managed 5N Canton Sandbox via OIDC |
+
+### Runtime modes
+
+1. **Memory** — default in local preview. An in-process ledger mimics Canton privacy rules so the UI works without a participant.
+2. **Localnet / Fly** — connect to a self-hosted Canton participant with JWT auth.
+3. **Devnet** — connect to Seaport Devnet with OIDC `client_credentials`. Selected by the header pill, persisted in the `canton_network` cookie.
+
+### Privacy model
+
+Canton's sub-transaction privacy means each party only sees contracts where it is a signatory or observer. The app preserves this by fetching contracts per party and filtering the in-memory ledger to match the same visibility rules.
+
 ## Files
 
 - `daml/Nhs.daml` — Daml templates (signatories, observers, choices).
@@ -337,6 +389,29 @@ Controller: `commissioner`. Archives the `Invoice` and creates a
 `ReconciledSpend` carrying the same `supplierName`, with `settlementTxId = None`.
 
 ---
+
+## Roadmap
+
+### Shipped
+- [x] Core NHS funding flow: Budget Allocation → Sub-allocation → Spend Commitment → Countersign → Reconciled Spend.
+- [x] Invoice parallel flow with `CountersignInvoice`.
+- [x] 15+ Daml templates across 8 packages: `Nhs`, `NhsTokenisedBudgetAllocation`, `BudgetAllocationReview`, `CommitmentInspector`, `InvoiceAnalytics`, `InvoiceRisk`, `ReconciledSpendSummary`, `SettlementReview`, plus `MockUsdcx`.
+- [x] Seaport Devnet deployment + live end-to-end smoke test.
+- [x] Mock-USDCx atomic DvP settlement demo (`SettleAndCountersign`).
+- [x] Role cockpits for Trust, ICB, Auditor, DHSC/NHSEngland.
+- [x] Create-contract UI with grouped templates and auto-derived SHA-256 commitments.
+- [x] FAQ, pitch deck, and hackathon submission page.
+
+### In progress
+- [ ] Replace raw `fetch` with `@canton-network/wallet-sdk` prepare-sign-submit flow.
+- [ ] PQS-backed indexer for richer ledger queries and analytics.
+- [ ] Real-time audit stream with Canton transaction trees.
+
+### Next
+- [ ] Swap `MockUsdcx` for real xReserve / USDCx on Devnet.
+- [ ] Multi-party atomic netting across ICBs and Trusts.
+- [ ] Production-ready key custody and user onboarding flows.
+- [ ] Integration with NHS identity / SAML SSO.
 
 ## Lessons learned
 
