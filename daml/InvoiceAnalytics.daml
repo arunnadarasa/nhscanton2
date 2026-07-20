@@ -17,6 +17,107 @@ template InvoiceAnalytics
         let vat = invoice.amountGbp * 0.20
         let total = invoice.amountGbp + vat
 
-        pure
-          ("Invoice Total = £"
-            <> show total)
+        pure $
+          "Invoice Total = £" <> show total
+
+    nonconsuming choice CalculateVat : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+
+        pure $
+          "VAT Amount = £" <> show vat
+
+    nonconsuming choice CalculateTotal : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let total = invoice.amountGbp + (invoice.amountGbp * 0.20)
+
+        pure $
+          "Total Payable = £" <> show total
+
+    nonconsuming choice GenerateSummary : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+        let total = invoice.amountGbp + vat
+
+        pure $
+          "Invoice Summary\n"
+          <> "Net Amount : £" <> show invoice.amountGbp
+          <> "\nVAT        : £" <> show vat
+          <> "\nTotal      : £" <> show total
+
+    nonconsuming choice NetAmount : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          "Net Amount = £" <> show invoice.amountGbp
+
+    nonconsuming choice VatSummary : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+
+        pure $
+          "VAT calculated successfully: £" <> show vat
+
+    nonconsuming choice InvoiceBreakdown : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+        let total = invoice.amountGbp + vat
+
+        pure $
+          "Breakdown\n"
+          <> "Amount : £" <> show invoice.amountGbp
+          <> "\nVAT    : £" <> show vat
+          <> "\nTotal  : £" <> show total
+
+    nonconsuming choice ValidateInvoice : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          if invoice.amountGbp <= 0.0 then
+            "Invoice amount is invalid"
+          else
+            "Invoice amount verified"
+
+    nonconsuming choice TaxReport : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+
+        pure $
+          "Tax Report Generated\n"
+          <> "VAT Liability = £" <> show vat
+
+    nonconsuming choice FinancialReport : Text
+      controller analyst
+      do
+        invoice <- fetch invoiceCid
+
+        let vat = invoice.amountGbp * 0.20
+        let total = invoice.amountGbp + vat
+
+        pure $
+          "Financial Report\n"
+          <> "Invoice Amount : £" <> show invoice.amountGbp
+          <> "\nVAT Amount     : £" <> show vat
+          <> "\nFinal Total    : £" <> show total
