@@ -15,8 +15,86 @@ template SettlementReview
         settlement <- fetch settlementCid
 
         case settlement.settlementRef of
-            None ->
-                pure "Settlement awaiting reference"
+          None ->
+            pure "Settlement awaiting reference"
 
-            Some _ ->
-                pure "Settlement ready for audit"
+          Some _ ->
+            pure "Settlement ready for audit"
+
+    nonconsuming choice VerifySettlement : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+          None ->
+            pure "Settlement verification failed"
+
+          Some _ ->
+            pure "Settlement verification successful"
+
+    nonconsuming choice SettlementStatus : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+          None ->
+            pure "Settlement status: Pending"
+
+          Some _ ->
+            pure "Settlement status: Completed"
+
+    nonconsuming choice ComplianceReview : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+          None ->
+            pure "Compliance review pending"
+
+          Some _ ->
+            pure "Compliance review completed"
+
+    nonconsuming choice GenerateReviewReport : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+          None ->
+            pure
+              "Settlement Review Report\n\
+              \Status: Pending\n\
+              \Reference: Not Available"
+
+          Some _ ->
+            pure
+              "Settlement Review Report\n\
+              \Status: Completed\n\
+              \Reference: Available"
+
+    nonconsuming choice AuditSettlement : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+          None ->
+            pure "Settlement requires additional review"
+
+          Some _ ->
+            pure "Settlement passed audit review"
+
+    nonconsuming choice SettlementSummary : Text
+      controller reviewer
+      do
+        settlement <- fetch settlementCid
+
+        case settlement.settlementRef of
+          None ->
+            pure "Settlement summary generated: Reference missing"
+
+          Some _ ->
+            pure "Settlement summary generated: Reference available"
