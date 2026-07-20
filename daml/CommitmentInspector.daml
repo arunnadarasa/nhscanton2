@@ -16,6 +16,50 @@ template CommitmentInspector
 
         pure $
           if hashText (show commitment.amountGbp) == commitment.amountCommit then
-              "Commitment integrity confirmed"
+            "Commitment integrity confirmed"
           else
-              "Commitment integrity failed"
+            "Commitment integrity failed"
+
+    nonconsuming choice VerifyCommitment : Text
+      controller auditor
+      do
+        commitment <- fetch commitmentCid
+
+        pure $
+          if commitment.amountCommit == "" then
+            "Commitment record is incomplete"
+          else
+            "Commitment record is available"
+
+    nonconsuming choice AuditCommitment : Text
+      controller auditor
+      do
+        commitment <- fetch commitmentCid
+
+        pure $
+          if hashText (show commitment.amountGbp) == commitment.amountCommit then
+            "Audit completed successfully"
+          else
+            "Audit detected an integrity mismatch"
+
+    nonconsuming choice GenerateInspectionReport : Text
+      controller auditor
+      do
+        commitment <- fetch commitmentCid
+
+        pure $
+          if hashText (show commitment.amountGbp) == commitment.amountCommit then
+            "Inspection Report: Commitment verified and ready for audit."
+          else
+            "Inspection Report: Commitment verification failed."
+
+    nonconsuming choice ComplianceReview : Text
+      controller auditor
+      do
+        commitment <- fetch commitmentCid
+
+        pure $
+          if commitment.amountCommit == "" then
+            "Compliance review failed"
+          else
+            "Compliance review completed"
