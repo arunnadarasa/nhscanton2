@@ -1,6 +1,6 @@
 module BudgetAllocationReview where
-import NhsTokenisedBudgetAllocation
 
+import NhsTokenisedBudgetAllocation
 
 template BudgetAllocationReview
   with
@@ -21,3 +21,34 @@ template BudgetAllocationReview
             "Budget allocated without a defined purpose"
           else
             "Budget allocation ready for distribution"
+
+    nonconsuming choice ValidateAllocation : Text
+      controller reviewer
+      do
+        allocation <- fetch allocationCid
+
+        pure $
+          if allocation.purpose == "" then
+            "Validation Failed: Missing purpose"
+          else
+            "Validation Successful"
+
+    nonconsuming choice AllocationSummary : Text
+      controller reviewer
+      do
+        allocation <- fetch allocationCid
+
+        pure $
+          "Budget allocation reviewed for purpose: "
+          <> allocation.purpose
+
+    nonconsuming choice ComplianceCheck : Text
+      controller reviewer
+      do
+        allocation <- fetch allocationCid
+
+        pure $
+          if allocation.purpose == "" then
+            "Compliance review required"
+          else
+            "Compliance requirements satisfied"
