@@ -71,7 +71,7 @@ This App is enabled with SHA 256 Encryption with Canton Security, All funding al
                │ TanStack Start server fns
                ▼
 ┌─────────────────────────────────────────┐
-│  Lovable Cloud Worker (TanStack Start)  │
+│  Cloud Worker (TanStack Start)  │
 │  - JSON Ledger API v2 client (fetch)    │
 │  - Per-request network mode (cookie)    │
 │  - OIDC client_credentials for Seaport  │
@@ -80,7 +80,7 @@ This App is enabled with SHA 256 Encryption with Canton Security, All funding al
                │ HTTPS / JSON Ledger API v2
                ▼
 ┌─────────────────────────────────────────┐
-│  Seaport Devnet participant (Canton 3.4)│
+│  Seaport Devnet participant │
 │  - Daml templates: NHS, NhsTokenised,   │
 │    BudgetAllocationReview, InvoiceRisk, │
 │    ReconciledSpendSummary, Settlement,  │
