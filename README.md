@@ -408,7 +408,7 @@ Controller: `commissioner`. Archives the `Invoice` and creates a
 - [ ] Real-time audit stream with Canton transaction trees.
 
 ### Next
-- [ ] Swap `MockUsdcx` for real xReserve / USDCx on Devnet.
+- [ ] Swap `MockUsdcx` for real xReserve / USDCx on Devnet. / CC on Devnet
 - [ ] Multi-party atomic netting across ICBs and Trusts.
 - [ ] Production-ready key custody and user onboarding flows.
 - [ ] Integration with NHS identity / SAML SSO.
