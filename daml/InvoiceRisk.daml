@@ -15,9 +15,63 @@ template InvoiceRisk
         invoice <- fetch invoiceCid
 
         pure $
-          if invoice.requiresManualApproval then
-            "High Risk Invoice"
-          else if invoice.supplierVerified then
-            "Low Risk Invoice"
+          case invoice.category of
+            "Medical Equipment" -> "High Risk Invoice"
+            "Medicines" -> "Medium Risk Invoice"
+            _ -> "Low Risk Invoice"
+
+    nonconsuming choice VerifyCategory : Text
+      controller auditor
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          if invoice.category == "" then
+            "Invoice category is missing"
           else
-            "Medium Risk Invoice"
+            "Invoice category verified"
+
+    nonconsuming choice AuditCategory : Text
+      controller auditor
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          case invoice.category of
+            "Medical Equipment" ->
+              "Audit Required: Medical Equipment"
+
+            "Medicines" ->
+              "Audit Required: Medicines"
+
+            _ ->
+              "Standard Audit Completed"
+
+    nonconsuming choice GenerateRiskReport : Text
+      controller auditor
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          "Risk assessment completed for invoice category: "
+          <> invoice.category
+
+    nonconsuming choice ComplianceReview : Text
+      controller auditor
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          if invoice.category == "" then
+            "Compliance review failed"
+          else
+            "Compliance review completed"
+
+    nonconsuming choice CategorySummary : Text
+      controller auditor
+      do
+        invoice <- fetch invoiceCid
+
+        pure $
+          "Invoice category recorded as: "
+          <> invoice.category
