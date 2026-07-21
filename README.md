@@ -296,7 +296,7 @@ Allows the commissioner to review and approve the spending commitment.
 | Field | Type | Description |
 |---------|---------|-------------|
 | CountersignPrivacy | ContractId ReconciledSpendPrivacy | Countersigns the reconciled spend and creates a ReconciledSpendPrivacy contract | 
-| commissioner | trust, commissioner, auditor, category, amountGbp, amountCommit, period, supplier, supplierCommit, settlementTxId | Used to populate the fields of the newly created ReconciledSpendPrivacy contract |
+| commissioner | Party | Commissioner party responsible for the contract and authorized to exercise all choices controlled by commissioner |
 
 
 ---
